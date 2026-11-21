@@ -11,7 +11,7 @@ import {
   removeGroup, removeGuest, saveGroup, saveGuest, saveSettings, signIn, signOut, signUp, submitRSVP, supabase, uploadAsset, whatsappUrl
 } from './data';
 import { DEFAULT_EVENT, type DashboardData, type EventSettings, type Guest, type GuestGroup, type PublicInvite, type RSVPStatus, type SongVariant } from './types';
-import { youtubeVideoId, YouTubeClipEmbed } from './youtube';
+import { isYouTubeAddress } from './youtube';
 
 const iconSize = 18;
 const songs: Record<SongVariant,string> = { default: 'Canción principal', special_1: 'Canción especial 1', special_2: 'Canción especial 2' };
@@ -100,39 +100,38 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
   const [saved,setSaved] = useState(false);
   const [error,setError] = useState('');
   const [giftOpen,setGiftOpen] = useState<'cash'|'ideas'|null>(null);
-  // La música se prepara antes de abrir el sobre. El gesto de abrir permite
-  // iniciar archivos MP3 directamente, sin un segundo clic sobre Play.
+  // La reproducción empieza con el gesto del usuario al abrir el sobre.
+  // YouTube no ofrece audio invisible de fondo: para esa experiencia usamos
+  // archivos de audio reproducibles directamente (MP3, M4A, OGG, WAV).
   const requestedMusic = guest.song_variant === 'special_1' ? settings.music_special_1_url : guest.song_variant === 'special_2' ? settings.music_special_2_url : settings.music_default_url;
-  const musicUrl = safeHref(requestedMusic || settings.music_default_url);
-  const musicYouTubeId = youtubeVideoId(musicUrl);
+  const selectedMusic = safeHref(requestedMusic || settings.music_default_url);
+  const musicUrl = selectedMusic && !isYouTubeAddress(selectedMusic) ? selectedMusic : '';
   const musicAudioRef = useRef<HTMLAudioElement | null>(null);
   const [musicStatus,setMusicStatus] = useState<'idle'|'playing'|'paused'|'blocked'|'finished'>('idle');
-  const [showYouTube,setShowYouTube] = useState(true);
   const musicEnd = 30;
   const activateAudio = () => {
     const player = musicAudioRef.current;
-    if (!player || !musicUrl || musicYouTubeId) return;
-    if (player.currentTime >= musicEnd - 0.1) player.currentTime = 0;
+    if (!player || !musicUrl) return;
+    // play() sucede directamente dentro del clic del sobre; no lo diferimos
+    // con setTimeout/useEffect porque perdería el permiso de interacción.
+    try { if (player.readyState > 0) player.currentTime = 0; } catch { /* audio todavía cargando */ }
     void player.play().then(() => setMusicStatus('playing')).catch(() => setMusicStatus('blocked'));
   };
   const toggleAudio = () => {
     const player = musicAudioRef.current;
     if (!player) return;
     if (!player.paused) { player.pause(); setMusicStatus('paused'); }
-    else activateAudio();
+    else {
+      if (player.currentTime >= musicEnd - 0.1) player.currentTime = 0;
+      void player.play().then(() => setMusicStatus('playing')).catch(() => setMusicStatus('blocked'));
+    }
   };
   useEffect(() => {
-    setMusicStatus('idle');
-    setShowYouTube(true);
+    // Detiene la canción anterior al cambiar el enlace/invitado.
     const audio = musicAudioRef.current;
-    if (!audio || !musicUrl || musicYouTubeId) return;
-    // Lo intentamos al entrar; cuando Chrome/Safari lo bloquean,
-    // la acción de abrir el sobre vuelve a activarlo con permiso del usuario.
-    let cancelled = false;
-    void audio.play().then(() => { if (!cancelled) setMusicStatus('playing'); })
-      .catch(() => { if (!cancelled) setMusicStatus('blocked'); });
-    return () => { cancelled = true; audio.pause(); };
-  }, [musicUrl, musicYouTubeId]);
+    setMusicStatus('idle');
+    return () => { audio?.pause(); };
+  }, [musicUrl]);
 
   useEffect(() => {
     if(!opened) return;
@@ -148,21 +147,15 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
     finally{setSaving(false);}
   };
   return <div className={`invitation ${opened?'invitation-opened':''}`}>
-    {!!musicUrl && !musicYouTubeId && <audio
+    {!!musicUrl && <audio
       ref={musicAudioRef}
       src={musicUrl}
       preload="auto"
-      onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0; } catch { /* aún no cargado */ } }}
       onTimeUpdate={e => { if (e.currentTarget.currentTime >= musicEnd) { e.currentTarget.pause(); setMusicStatus('finished'); } }}
       onEnded={() => setMusicStatus('finished')}
       onError={() => setMusicStatus('blocked')}
     />}
     <Confetti active={confetti}/>
-    {opened && musicYouTubeId && showYouTube && <div className="invite-youtube-dock" aria-label="Música de la invitación desde YouTube">
-      <div className="invite-youtube-heading"><span><Music2 size={14}/> La canción de tu invitación</span><button type="button" title="Cerrar reproductor" aria-label="Cerrar reproductor de música" onClick={() => setShowYouTube(false)}><X size={16}/></button></div>
-      <YouTubeClipEmbed id={musicYouTubeId} start={0} end={30} autoPlay title="Música de la invitación" />
-      <p>Si tu navegador bloquea el sonido automático, toca Play en el video.</p>
-    </div>}
 
     {!opened ? <div className="envelope-screen">
       <div className="math-stars" aria-hidden="true"><span>∑</span><span>∞</span><span>π</span><span>√</span><span>∫</span><span>α</span><span>≡</span></div>
@@ -173,7 +166,7 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
       <button type="button" className="primary gold-btn envelope-cta" onClick={start}>Abrir mi invitación <Sparkles size={17}/></button>
       <div className="envelope-footer">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
     </div> : <>
-      <header className="invite-nav"><span className="invite-brand"><GraduationCap size={19}/> <span>Mi graduación</span></span><div><span className="invite-nav-tag">18 DIC 2026</span>{!!musicUrl && !musicYouTubeId && <button type="button" className="nav-music" onClick={toggleAudio} title={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'} aria-label={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'}>{musicStatus === 'playing' ? <Volume2 size={17}/> : <Music2 size={17}/>}</button>}</div></header>
+      <header className="invite-nav"><span className="invite-brand"><GraduationCap size={19}/> <span>Mi graduación</span></span><div><span className="invite-nav-tag">18 DIC 2026</span>{!!musicUrl && <button type="button" className="nav-music" onClick={toggleAudio} title={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'} aria-label={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'}>{musicStatus === 'playing' ? <Volume2 size={17}/> : <Music2 size={17}/>}</button>}</div></header>
       <main>
         <section className="invite-hero">
           <div className="hero-shine"/><div className="math-stars math-stars-open" aria-hidden="true"><span>∑</span><span>∞</span><span>π</span><span>√</span><span>∫</span><span>α</span><span>≡</span></div>
@@ -188,7 +181,6 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
         <section className="photo-section reveal"><div className="section-eyebrow">CADA SUEÑO TIENE SU HISTORIA</div><h2>La fórmula de <em>un sueño cumplido</em></h2>
           <p className="section-lead">Entre desafíos, números y nuevas oportunidades, cada paso valió la pena. Hoy celebramos todo lo aprendido y lo que está por venir.</p>
           <div className="polaroid-row">{[0,1,2].map(i=><GraduatesPhoto key={i} src={settings.photo_urls[i] || ''} index={i}/>)}</div>
-          {!!musicUrl && !musicYouTubeId && <p className="auto-music-note"><Music2 size={16}/> {musicStatus === 'blocked' ? 'Para escuchar la canción, toca el icono de música de la parte superior.' : musicStatus === 'playing' ? 'Tu canción está sonando mientras disfrutas la invitación.' : 'Esta invitación tiene una canción especial para ti.'}</p>}
         </section>
         <section className="count-section reveal"><GoldStar/><div className="section-eyebrow">CADA SEGUNDO NOS ACERCA</div><h2>Falta poquito para <em>celebrar</em></h2><Countdown date={settings.event_datetime}/><p>El tiempo corre y la emoción crece. ¡Nos vemos muy pronto!</p></section>
         <section className="detail-section reveal" id="detalles"><div className="section-eyebrow">GUARDA ESTA FECHA</div><h2>Fecha, hora <em>y lugar</em></h2><div className="detail-cards">
@@ -291,7 +283,7 @@ function Admin() {
       {tab==='groups'&&<><AdminHeading eyebrow="ORGANIZA A TU GENTE" title="Grupos de invitados" detail="Crea grupos como familia, amigos, docentes o compañeros. Después asigna cada invitación." action={<button className="primary" onClick={()=>editGroup()}><Plus size={18}/> Nuevo grupo</button>}/><div className="groups-grid">{data.groups.map(g=><div key={g.id} className="admin-card group-card"><div className="group-card-top"><div className="group-icon"><Users size={24}/></div><div className="actions-row"><button onClick={()=>editGroup(g)} title="Editar grupo"><Edit3 size={16}/></button><button className="delete-icon" onClick={()=>{if(confirm(`¿Eliminar el grupo ${g.name}? Las invitaciones no se borrarán.`))void mutate(()=>removeGroup(g.id),'Grupo eliminado.');}} title="Eliminar grupo"><Trash2 size={16}/></button></div></div><h3>{g.name}</h3><p>{g.notes||'Grupo de invitados especiales'}</p><div className="group-card-footer"><span>{data.guests.filter(guest=>guest.group_id===g.id).length} invitaciones</span><span>{g.default_seats} cupos sugeridos</span></div></div>)}<button className="add-group-card" onClick={()=>editGroup()}><Plus size={30}/><strong>Agregar grupo</strong><span>Organiza mejor tu celebración</span></button></div></>}
       {tab==='responses'&&<><AdminHeading eyebrow="LA EMOCIÓN DE CADA RESPUESTA" title="Confirmaciones" detail="Consulta respuestas actualizadas automáticamente, los cupos utilizados y los mensajes." action={<button className="outline-button" onClick={()=>exportCSV(data)}><Download size={17}/> Exportar CSV</button>}/><div className="metrics-grid metrics-short"><Metric label="Confirmaron" value={confirmed.length} icon={BadgeCheck} suffix="invitaciones"/><Metric label="Personas que asistirán" value={confirmedSeats} icon={Users} suffix="asistentes"/><Metric label="No asistirán" value={declined.length} icon={XCircle} suffix="respuestas"/><Metric label="Faltan por responder" value={data.guests.length-confirmed.length-declined.length} icon={Clock3} suffix="invitaciones"/></div><div className="admin-card responses-card"><div className="card-header"><h3>Listado de respuestas</h3><span>{data.guests.length} invitaciones enviables</span></div><div className="table-wrap"><table className="admin-table"><thead><tr><th>INVITADO</th><th>ESTADO</th><th>ASISTENTES</th><th>MENSAJE</th><th>FECHA</th></tr></thead><tbody>{data.guests.map(g=><tr key={g.id}><td><strong>{g.name}</strong></td><td><span className={`status-pill ${statusClass[g.status]}`}>{statusText[g.status]}</span></td><td>{g.status==='confirmed'?`${g.attending_count} / ${g.seats}`:'—'}</td><td className="message-preview">{g.message||'—'}</td><td>{g.confirmed_at?new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short',timeZone:'America/Bogota'}).format(new Date(g.confirmed_at)):'—'}</td></tr>)}</tbody></table></div></div></>}
       {tab==='settings'&&settingsDraft&&<><AdminHeading eyebrow="DISEÑA UNA EXPERIENCIA ÚNICA" title="Personaliza tu evento" detail="Estos detalles se reflejarán automáticamente en todas las invitaciones." action={<button className="primary" disabled={savingSettings} onClick={()=>void mutateSettings()}><Check size={18}/>{savingSettings?'Guardando...':'Guardar cambios'}</button>}/><div className="settings-layout"><div className="settings-main"><div className="admin-card settings-card"><div className="card-header"><div><h3><GraduationCap size={20}/> Datos de la graduación</h3><p>La información principal que verán tus invitados.</p></div></div><div className="form-grid"><Field label="Nombre del graduando" value={settingsDraft.graduate_name} onChange={v=>updateSettings('graduate_name',v)}/><Field label="Título o carrera" value={settingsDraft.degree} onChange={v=>updateSettings('degree',v)}/><Field label="Frase de portada" value={settingsDraft.headline} onChange={v=>updateSettings('headline',v)}/><Field label="Fecha y hora (Colombia)" type="datetime-local" value={dateForInput(settingsDraft.event_datetime)} onChange={v=>updateSettings('event_datetime',`${v}:00-05:00`)}/><Field label="Nombre del lugar" value={settingsDraft.venue_name} onChange={v=>updateSettings('venue_name',v)}/><Field label="Dirección completa" value={settingsDraft.venue_address} onChange={v=>updateSettings('venue_address',v)}/><Field label="Enlace de Google Maps" value={settingsDraft.maps_url} onChange={v=>updateSettings('maps_url',v)} placeholder="https://maps.google.com/..."/><Field label="Código de vestuario" value={settingsDraft.dress_code} onChange={v=>updateSettings('dress_code',v)}/><Field label="Fecha límite de confirmación" type="date" value={settingsDraft.rsvp_deadline} onChange={v=>updateSettings('rsvp_deadline',v)}/></div><label className="block-label">Mensaje de bienvenida<textarea value={settingsDraft.intro} rows={3} onChange={e=>updateSettings('intro',e.target.value)}/></label><label className="block-label">Mensaje final<textarea value={settingsDraft.closing_message} rows={2} onChange={e=>updateSettings('closing_message',e.target.value)}/></label></div>
-        <div className="admin-card settings-card"><div className="card-header"><div><h3><Music2 size={20}/> Música de las invitaciones</h3><p>Pega una canción principal para todos y, si quieres, otras dos canciones para invitados especiales. Ya no tienes que recortar.</p></div></div><div className="asset-stack">{([{key:'music_default_url',startKey:'music_default_start',endKey:'music_default_end',label:'Canción principal · todos los invitados',section:'music-main'},{key:'music_special_1_url',startKey:'music_special_1_start',endKey:'music_special_1_end',label:'Canción diferente · invitado especial 1',section:'music-special-1'},{key:'music_special_2_url',startKey:'music_special_2_start',endKey:'music_special_2_end',label:'Canción diferente · invitado especial 2',section:'music-special-2'}] as const).map(item=><MusicLinkField key={item.key} label={item.label} value={settingsDraft[item.key]} onValue={v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev)} onUpload={f=>handleUpload(f,item.section,v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev))} uploading={uploading===item.section}/>)}</div><p className="form-help"><Volume2 size={16}/> La canción se intenta reproducir al abrir el sobre. Los archivos MP3 pueden sonar con ese toque; en YouTube se necesita mostrar el video y algunos navegadores requieren pulsar Play. Cada reproducción dura como máximo 30 segundos.</p></div>
+        <div className="admin-card settings-card"><div className="card-header"><div><h3><Music2 size={20}/> Música de las invitaciones</h3><p>Configura un archivo de audio directo para que suene al abrir el sobre, sin video ni otro botón Play.</p></div></div><div className="asset-stack">{([{key:'music_default_url',startKey:'music_default_start',endKey:'music_default_end',label:'Canción principal · todos los invitados',section:'music-main'},{key:'music_special_1_url',startKey:'music_special_1_start',endKey:'music_special_1_end',label:'Canción diferente · invitado especial 1',section:'music-special-1'},{key:'music_special_2_url',startKey:'music_special_2_start',endKey:'music_special_2_end',label:'Canción diferente · invitado especial 2',section:'music-special-2'}] as const).map(item=><MusicLinkField key={item.key} label={item.label} value={settingsDraft[item.key]} onValue={v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev)} onUpload={f=>handleUpload(f,item.section,v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev))} uploading={uploading===item.section}/>)}</div><p className="form-help"><Volume2 size={16}/> Al abrir el sobre comenzarán a sonar hasta 30 segundos de la canción. Usa un enlace directo a MP3, M4A, OGG o WAV. Los enlaces de YouTube no permiten música invisible sin el video; reemplázalos para activar este modo.</p></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Gift size={20}/> Ideas de regalos</h3><p>Puedes mostrar las dos opciones a todos los invitados.</p></div></div><label className="block-label">Opción 1 · Lluvia de sobres<textarea value={settingsDraft.gift_cash_text} rows={3} onChange={e=>updateSettings('gift_cash_text',e.target.value)}/></label><label className="block-label">Opción 2 · Regalo especial<textarea value={settingsDraft.gift_ideas_text} rows={3} onChange={e=>updateSettings('gift_ideas_text',e.target.value)}/></label></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Sparkles size={20}/> Galería de recuerdos</h3><p>Agrega hasta tres fotografías del graduando.</p></div></div><div className="asset-stack">{[0,1,2].map(i=><AssetField key={i} label={`Fotografía ${i+1}`} type="image" value={settingsDraft.photo_urls[i]||''} onValue={v=>updateSettings('photo_urls',[...settingsDraft.photo_urls.slice(0,i),v,...settingsDraft.photo_urls.slice(i+1)])} onUpload={f=>handleUpload(f,`photo-${i}`,v=>updateSettings('photo_urls',[...settingsDraft.photo_urls.slice(0,i),v,...settingsDraft.photo_urls.slice(i+1)]))} uploading={uploading===`photo-${i}`}/>)}</div></div>
       </div><div className="settings-side"><div className="admin-card live-preview-card"><div className="section-eyebrow">VISTA PREVIA</div><div className="preview-mini"><GraduationCap size={36}/><p className="script">El gran día</p><h3>{settingsDraft.graduate_name||'Mi graduación'}</h3><span>{settingsDraft.degree}</span><div>✦ 18 · 12 · 2026 ✦</div></div><p>Así se verá la portada de las invitaciones.</p><button className="outline-button" onClick={()=>{if(data.guests.length)window.open(invitationUrl(data.guests[0].share_token),'_blank');else tell('Primero crea una invitación para abrir su vista previa.');}}>Abrir invitación de prueba <ExternalLink size={16}/></button></div><div className="admin-card tips-card"><ShieldCheck size={22}/><h4>Tu información está protegida</h4><p>{hasCloud?'Los nombres y teléfonos se guardan en Supabase y solo son visibles desde el panel autenticado.':'Estás usando el modo local; conecta la nube antes de compartir enlaces.'}</p></div></div></div></>}
@@ -301,7 +293,7 @@ function Admin() {
     {showGroupDialog&&groupEditing&&<GroupDialog initial={groupEditing} onClose={()=>setShowGroupDialog(false)} onSave={async g=>{await mutate(()=>saveGroup(g),'Grupo guardado correctamente.');setShowGroupDialog(false);}}/>}
   </div>;
   function updateSettings<K extends keyof EventSettings>(key:K,value:EventSettings[K]) {setSettingsDraft(prev=>prev?{...prev,[key]:value}:prev);}
-  async function mutateSettings(){if(!settingsDraft)return;setSavingSettings(true);try{await saveSettings(settingsDraft);await refresh();tell('¡Evento actualizado! Los cambios ya se reflejan en las invitaciones.');}catch(e){tell(`Error: ${(e as Error).message}`);}finally{setSavingSettings(false);}}
+  async function mutateSettings(){if(!settingsDraft)return;setSavingSettings(true);try{await saveSettings(settingsDraft);await refresh();tell([settingsDraft.music_default_url,settingsDraft.music_special_1_url,settingsDraft.music_special_2_url].some(isYouTubeAddress) ? 'Cambios guardados. Atención: reemplaza los enlaces de YouTube por MP3 directos para que la música suene al abrir el sobre.' : '¡Evento actualizado! Los cambios ya se reflejan en las invitaciones.');}catch(e){tell(`Error: ${(e as Error).message}`);}finally{setSavingSettings(false);}}
   async function handleUpload(file:File,section:string,done:(url:string)=>void){setUploading(section);try{if(!userId)throw new Error('Conecta Supabase para subir fotos y canciones.');const result=await uploadAsset(file,section,userId);done(result);tell('Archivo subido. Ahora pulsa Guardar cambios para publicarlo.');}catch(e){tell((e as Error).message);}finally{setUploading('');}}
 }
 
@@ -325,14 +317,14 @@ function GroupDialog({initial,onSave,onClose}:{initial:GuestGroup;onSave:(g:Gues
 function Field({label,value,onChange,type='text',placeholder}:{label:string;value:string;onChange:(value:string)=>void;type?:string;placeholder?:string}) {return <label>{label}<input value={value} type={type} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>;}
 function MusicLinkField({label,value,onValue,onUpload,uploading}:{label:string;value:string;onValue:(url:string)=>void;onUpload:(file:File)=>void;uploading:boolean}) {
   const fileRef=useRef<HTMLInputElement|null>(null);
-  const yt=youtubeVideoId(value);
-  return <div className="asset-field"><div className="asset-head"><strong>{label}</strong><span>Enlace de YouTube o MP3 propio</span></div>
+  const yt=isYouTubeAddress(value);
+  return <div className="asset-field"><div className="asset-head"><strong>{label}</strong><span>Enlace directo a MP3 / M4A / OGG / WAV</span></div>
     <div className="asset-control"><div className="asset-input-icon"><Music2 size={18}/></div>
-      <input type="url" aria-label={`Enlace para ${label}`} placeholder="https://www.youtube.com/watch?v=..." value={value} onChange={e=>onValue(e.target.value)}/>
+      <input type="url" aria-label={`Enlace para ${label}`} placeholder="https://ejemplo.com/mi-cancion.mp3" value={value} onChange={e=>onValue(e.target.value)}/>
       <input ref={fileRef} type="file" hidden accept="audio/*,.mp3,.m4a,.ogg,.wav" onChange={(e:ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(file)onUpload(file);e.target.value='';}}/>
       <button type="button" className="outline-button" disabled={uploading} onClick={()=>fileRef.current?.click()}>{uploading?'Subiendo...':'Subir MP3'}</button>
     </div>
-    {value && <p className="music-url-hint">{yt ? '✓ Enlace de YouTube reconocido. El video aparecerá en la invitación y se intentará reproducir al abrirla.' : safeHref(value) ? '✓ Enlace guardado para la canción. Para sonar directamente, debe ser un archivo de audio público.' : 'Pega una dirección HTTPS válida.'}</p>}
+    {value && <p className={`music-url-hint ${yt ? 'music-url-hint-warning' : ''}`}>{yt ? '⚠️ Este enlace de YouTube NO puede sonar como música de fondo sin mostrar video. Para que suene al abrir el sobre, reemplázalo por el enlace directo de un MP3/M4A/OGG autorizado.' : safeHref(value) ? 'Enlace configurado. Debe servir directamente un archivo de audio público para reproducirse al abrir el sobre.' : 'Pega una dirección HTTPS válida.'}</p>}
   </div>;
 }
 function AssetField({label,type,value,onValue,onUpload,uploading}:{label:string;type:'audio'|'image';value:string;onValue:(s:string)=>void;onUpload:(f:File)=>void;uploading:boolean}) {

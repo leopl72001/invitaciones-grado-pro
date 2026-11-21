@@ -8,7 +8,7 @@ Aplicación React + TypeScript + Vite para la fiesta de **Licenciatura en Matem�
 - Panel administrativo para **crear, editar, eliminar y filtrar invitados**, cada uno con **nombre, grupo, cupos, teléfono y enlace exclusivo**.
 - Catálogo de invitaciones y botones **Copiar enlace**, **Vista previa** y **Enviar por WhatsApp**.
 - Grupos de invitados (familia, amigos, etc.) y cupos sugeridos por grupo.
-- Música simplificada: pega enlaces directos de MP3 o enlaces de videos de YouTube; eliminamos la tijera y la línea de tiempo del panel. Se intenta iniciar al entrar y al abrir el sobre, según lo permita el navegador.
+- Música de fondo sin reproductor visible: pega una URL de audio directo (MP3/M4A/OGG/WAV). El clip empieza al abrir el sobre y se detiene después de 30 segundos. YouTube no puede usarse como audio invisible.
 - Tres canciones configurables: una general y **dos canciones especiales** que se asignan a dos invitaciones específicas. El sistema impide usar cada canción especial en más de una invitación.
 - Formulario de **confirmación de asistencia** con validación de cupos, mensaje y opción de modificar la respuesta.
 - Registro de respuestas (el panel actualiza cada 12 segundos), cantidad de asistentes y exportación CSV; ideas de regalos en dos categorías.
@@ -49,7 +49,7 @@ Abre `http://localhost:5173`.
 
 Se pueden pegar URLs públicas HTTPS o subir archivos al bucket `invitation-assets` con el botón **Subir** (requiere iniciar sesión en Supabase). Las fotografías y los clips subidos serán **públicos para quien conozca su URL**, no incluyas archivos privados. Para los audios usa material propio o autorizado; la app limita la reproducción a 30 segundos, pero eso no sustituye los permisos de uso.
 
-Los navegadores **no siempre permiten reproducir audio automáticamente con sonido**. Con archivos MP3 públicos la app lo intenta al entrar y vuelve a intentarlo cuando el invitado toca **Abrir mi invitación**. Con YouTube se muestra el reproductor oficial (no se extrae audio), se intenta la reproducción al abrir el sobre y quizá haya que tocar Play en el propio video.
+Para iniciar música con sonido, los navegadores suelen exigir una interacción humana. GradoPro aprovecha el clic sobre **«Abrir mi invitación»** (o sobre el sobre) para reproducir el audio MP3 directamente, sin mostrar reproductor ni exigir un segundo Play. Enlaces de YouTube, Spotify o páginas de escucha **no son archivos de audio directos** y no funcionarán en este modo. Para incluir música de esas plataformas sin video debes obtener un archivo autorizado y hospedarlo en una URL pública directa, por ejemplo en Supabase Storage.
 
 ## Publicar en GitHub Pages
 
@@ -96,10 +96,10 @@ Los datos de ejemplo “Familia de ejemplo” e “Invitado especial” sirven p
 
 ## Música simplificada y reproducción al abrir
 
-- **Personalización → Música de las invitaciones:** solo se pega el enlace de YouTube o audio MP3. Ya no hay editor de tijera, dos cursores ni selección manual de inicio/final.
+- **Personalización → Música de las invitaciones:** pega el enlace directo de un MP3/M4A/OGG/WAV. Ya no hay editor de tijera ni video de YouTube en la invitación.
 - La **canción principal** corresponde a todos los invitados, salvo las dos invitaciones marcadas como **Especial 1** o **Especial 2**. La asignación se hace al crear/editar la invitación individual. Si una pista especial está vacía, se utiliza la principal.
-- Al entrar a la invitación se intenta reproducir el audio si es un archivo directamente reproducible. Al tocar el sobre o **Abrir mi invitación** se hace otro intento bajo el gesto del usuario. El audio se detiene tras **30 segundos** y se puede pausar desde el icono de música.
-- Para **YouTube**, el navegador puede bloquear el autoplay con sonido y los videos pueden prohibir la inserción. El reproductor oficial debe permanecer visible; se muestra como tarjeta de video, se intenta reproducir al abrir el sobre y el invitado puede pulsar Play en el propio video si la reproducción automática no se permite. No se oculta ni se descarga audio de YouTube.
+- Al tocar el sobre o **«Abrir mi invitación»**, se llama a `audio.play()` en ese mismo gesto para reproducir automáticamente el audio de fondo. Se detiene tras **30 segundos** y se puede pausar desde el icono de música.
+- El reproductor de YouTube fue eliminado de la invitación. Si antes había un enlace de YouTube guardado, **no se oirá** hasta reemplazarlo por una URL de audio directo. El panel muestra una advertencia en ese campo. No se oculta el reproductor de YouTube, no se extrae su audio y no se promete reproducción automática sin interacción.
 - Al pegar otro enlace nuevo, la selección anterior se restablece a los primeros 30 segundos. El resto de ajustes, los grupos y las confirmaciones no se modifican.
 - Las canciones deben ser propias o contar con los permisos de uso correspondientes. El botón **Subir MP3** funciona después de configurar Supabase Storage.
 
