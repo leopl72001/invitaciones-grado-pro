@@ -165,6 +165,7 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
       </div>
       <button type="button" className="primary gold-btn envelope-cta" onClick={start}>Abrir mi invitación <Sparkles size={17}/></button>
       <div className="envelope-footer">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
+      {!hasCloud && selectedMusic && !musicUrl && <p role="status" style={{marginTop:14,fontSize:12,color:'#e0c594',maxWidth:480,textAlign:'center'}}>La música aún tiene un enlace de YouTube: para escucharla sin video necesitas configurar un archivo MP3 en Personalización.</p>}
     </div> : <>
       <header className="invite-nav"><span className="invite-brand"><GraduationCap size={19}/> <span>Mi graduación</span></span><div><span className="invite-nav-tag">18 DIC 2026</span>{!!musicUrl && <button type="button" className="nav-music" onClick={toggleAudio} title={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'} aria-label={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'}>{musicStatus === 'playing' ? <Volume2 size={17}/> : <Music2 size={17}/>}</button>}</div></header>
       <main>
@@ -317,14 +318,66 @@ function GroupDialog({initial,onSave,onClose}:{initial:GuestGroup;onSave:(g:Gues
 function Field({label,value,onChange,type='text',placeholder}:{label:string;value:string;onChange:(value:string)=>void;type?:string;placeholder?:string}) {return <label>{label}<input value={value} type={type} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>;}
 function MusicLinkField({label,value,onValue,onUpload,uploading}:{label:string;value:string;onValue:(url:string)=>void;onUpload:(file:File)=>void;uploading:boolean}) {
   const fileRef=useRef<HTMLInputElement|null>(null);
+  const testAudioRef=useRef<HTMLAudioElement|null>(null);
+  const [testState,setTestState]=useState<'idle'|'loading'|'playing'|'error'>('idle');
+  const [testMessage,setTestMessage]=useState('');
   const yt=isYouTubeAddress(value);
-  return <div className="asset-field"><div className="asset-head"><strong>{label}</strong><span>Enlace directo a MP3 / M4A / OGG / WAV</span></div>
+  useEffect(()=>{
+    setTestState('idle');setTestMessage('');
+    return ()=>{
+      const audio=testAudioRef.current;
+      if(audio){audio.pause();audio.removeAttribute('src');audio.load();testAudioRef.current=null;}
+    };
+  },[value]);
+  const stopTest=()=>{
+    testAudioRef.current?.pause();
+    setTestState('idle');
+    setTestMessage('Prueba detenida.');
+  };
+  const testMusic=()=>{
+    if(yt) {setTestState('error');setTestMessage('Este enlace de YouTube no es un archivo MP3. Sustitúyelo por una URL directa a un audio que tengas permitido utilizar.');return;}
+    const link=safeHref(value);
+    if(!link) {setTestState('error');setTestMessage('Pega un enlace HTTPS válido a un archivo de audio.');return;}
+    if(testAudioRef.current){testAudioRef.current.pause();testAudioRef.current.removeAttribute('src');testAudioRef.current.load();}
+    const audio=new Audio(link);
+    testAudioRef.current=audio;
+    audio.preload='auto';
+    audio.volume=1;
+    setTestState('loading');
+    setTestMessage('Comprobando el archivo de audio...');
+    audio.onplaying=()=>{
+      if(testAudioRef.current!==audio)return;
+      setTestState('playing');setTestMessage('La canción está reproduciéndose. Si no la escuchas, comprueba el volumen del navegador y del dispositivo.');
+    };
+    audio.onerror=()=>{
+      if(testAudioRef.current!==audio)return;
+      setTestState('error');
+      setTestMessage('El navegador no pudo cargar este enlace como audio. Verifica que abra directamente un MP3/M4A/OGG válido y público, no una página web.');
+    };
+    audio.ontimeupdate=()=>{
+      if(testAudioRef.current===audio && audio.currentTime>=5){
+        audio.pause();setTestState('idle');setTestMessage('Prueba completada: el navegador pudo reproducir los primeros 5 segundos.');
+      }
+    };
+    void audio.play().catch((err: unknown)=>{
+      if(testAudioRef.current!==audio)return;
+      const name=err instanceof Error ? err.name : '';
+      setTestState('error');
+      setTestMessage(name==='NotAllowedError'?'El navegador bloqueó la reproducción. Pulsa Probar audio nuevamente y revisa los permisos de sonido.':'El archivo no se puede reproducir en este navegador. Revisa el enlace o prueba con otro MP3.');
+    });
+  };
+  return <div className="asset-field">
+    <div className="asset-head"><strong>{label}</strong><span>Enlace directo a MP3 / M4A / OGG / WAV</span></div>
     <div className="asset-control"><div className="asset-input-icon"><Music2 size={18}/></div>
       <input type="url" aria-label={`Enlace para ${label}`} placeholder="https://ejemplo.com/mi-cancion.mp3" value={value} onChange={e=>onValue(e.target.value)}/>
       <input ref={fileRef} type="file" hidden accept="audio/*,.mp3,.m4a,.ogg,.wav" onChange={(e:ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(file)onUpload(file);e.target.value='';}}/>
       <button type="button" className="outline-button" disabled={uploading} onClick={()=>fileRef.current?.click()}>{uploading?'Subiendo...':'Subir MP3'}</button>
     </div>
-    {value && <p className={`music-url-hint ${yt ? 'music-url-hint-warning' : ''}`}>{yt ? '⚠️ Este enlace de YouTube NO puede sonar como música de fondo sin mostrar video. Para que suene al abrir el sobre, reemplázalo por el enlace directo de un MP3/M4A/OGG autorizado.' : safeHref(value) ? 'Enlace configurado. Debe servir directamente un archivo de audio público para reproducirse al abrir el sobre.' : 'Pega una dirección HTTPS válida.'}</p>}
+    {value && <p className={`music-url-hint ${yt ? 'music-url-hint-warning' : ''}`}>{yt ? '⚠️ Enlace incompatible: YouTube no puede sonar como música invisible de fondo. Este enlace NO producirá sonido al abrir el sobre. Necesitas un MP3/M4A/OGG directo.' : safeHref(value) ? 'Antes de guardar, usa Probar audio: te confirmará si el navegador realmente puede escuchar esta dirección.' : 'Pega una dirección HTTPS válida.'}</p>}
+    <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap',marginTop:10}}>
+      <button type="button" className="outline-button" disabled={!value||yt} onClick={testState==='playing'?stopTest:testMusic}>{testState==='playing'?'Detener prueba':'Probar audio (5 s)'}</button>
+      {value&&<span role="status" aria-live="polite" style={{fontSize:12,color:testState==='error'?'#bd643c':'#66758d',flex:'1 1 240px'}}>{yt?'Para usar esta canción sin video necesitas el archivo de audio.':testMessage||'Comprueba que la canción suene antes de enviarla.'}</span>}
+    </div>
   </div>;
 }
 function AssetField({label,type,value,onValue,onUpload,uploading}:{label:string;type:'audio'|'image';value:string;onValue:(s:string)=>void;onUpload:(f:File)=>void;uploading:boolean}) {
