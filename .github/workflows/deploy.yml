@@ -26,6 +26,23 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      - name: Verificar que la hoja de estilos se publique
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('dist/index.html', 'utf8');
+          const cssUrl = html.match(/href="(\/invitaciones-grado-pro\/assets\/[^"]+\.css)"/)?.[1];
+          if (!cssUrl) {
+            console.error('ERROR: falta el CSS en el HTML publicado.');
+            process.exit(1);
+          }
+          const cssPath = 'dist' + cssUrl.replace('/invitaciones-grado-pro', '');
+          if (!fs.existsSync(cssPath) || fs.statSync(cssPath).size < 1000) {
+            console.error('ERROR: no se generó el archivo de estilos:', cssPath);
+            process.exit(1);
+          }
+          console.log('CSS verificado:', cssUrl, fs.statSync(cssPath).size, 'bytes');
+          NODE
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
