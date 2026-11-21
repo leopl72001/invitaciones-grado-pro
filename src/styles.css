@@ -84,3 +84,119 @@
 .gallery-photo-actions button:disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:760px){.hero-photo-orbit{right:-21px;top:26%;width:95px;height:124px;opacity:.23}.story-frame{grid-template-columns:1fr;gap:35px}.story-photo{margin:0 auto;width:min(78%,335px)}.story-caption{text-align:center}.story-caption p{margin-inline:auto}.story-pagination{justify-content:center}.nav-cinema span{display:none}.nav-cinema{width:37px;height:37px;justify-content:center}.gallery-photo-editor{grid-template-columns:1fr}.photo-story-section{padding:75px 22px}.filmstrip-section{padding:80px 0}}
 @media(prefers-reduced-motion:reduce){.cinematic-lights,.hero-photo-orbit{display:none!important}.filmstrip-track,.polaroid,.story-photo,.story-photo img,.polaroid img,.invite-hero .hero-shine,.invite-hero h1,.invite-hero h2,.invite-hero .hero-welcome,.photo-section:after,.detail-section:after,.invitee-section:after{animation:none!important}.filmstrip-window{overflow-x:auto;mask-image:none}.reveal{opacity:1;transform:none}}
+
+
+/* INTRO CINEMATOGRÁFICA — la tarjeta emerge del sobre y llena la pantalla. */
+.ci-screen{
+  --ci-gold:#e9c88d; --ci-light:#f9f3e9;
+  position:relative; isolation:isolate; width:100%; min-height:100svh;
+  padding:clamp(28px,5vh,56px) 20px 34px;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  overflow:hidden; color:var(--ci-light); text-align:center;
+  background:radial-gradient(ellipse at 50% 42%,#26365e 0%,#142143 36%,#080f26 82%);
+}
+.ci-screen:before{content:'';position:absolute;inset:13px;border:1px solid #e6c88b21;pointer-events:none;z-index:2}
+.ci-spotlights{position:absolute;inset:-15%;z-index:-1;pointer-events:none;
+  background:conic-gradient(from 90deg at 50% 42%,transparent 10%,#d9b7760b 22%,transparent 35%,#e2b77710 58%,transparent 69%);
+  animation:ciSpotSweep 19s ease-in-out infinite alternate}
+@keyframes ciSpotSweep{to{transform:rotate(18deg) scale(1.08)}}
+.ci-ambient-particles{position:absolute;inset:0;pointer-events:none;z-index:-1}
+.ci-ambient-particles i{position:absolute;left:var(--ci-x);top:var(--ci-y);height:3px;width:3px;border-radius:50%;background:#e8c58a;box-shadow:0 0 18px 5px #ebca8555;animation:ciParticle 8s ease-in-out var(--ci-delay) infinite alternate}
+@keyframes ciParticle{0%{opacity:.08;transform:translateY(12px) scale(.7)}50%{opacity:.8}100%{opacity:.1;transform:translateY(-25px) scale(1.4)}}
+.ci-heading{position:relative;z-index:2;transition:opacity .65s ease,transform .75s ease;max-width:850px}
+.ci-eyebrow{font-size:10px;font-weight:700;letter-spacing:.33em;color:var(--ci-gold);display:block}
+.ci-heading h1{font-size:clamp(34px,5vw,63px);line-height:1.05;font-weight:400;margin:15px 0 8px!important}
+.ci-heading h1 em{color:#e8c88c;font-weight:400}
+.ci-heading p{font-size:13px;color:#c2cadb;margin:0}
+.ci-stage{position:relative;width:min(100%,610px);height:clamp(340px,45vh,470px);
+  display:flex;align-items:center;justify-content:center;perspective:1400px;z-index:3}
+.ci-stage-ring{position:absolute;border:1px solid #efd9a319;width:min(73vw,440px);aspect-ratio:1;border-radius:50%;pointer-events:none;animation:ciRing 10s ease-in-out infinite alternate}
+.ci-stage-ring:after{content:'';position:absolute;inset:10%;border:1px solid #efd9a310;border-radius:50%}
+@keyframes ciRing{from{transform:scale(.95);opacity:.5}to{transform:scale(1.07);opacity:1}}
+.ci-stage-halo{position:absolute;width:min(77vw,460px);height:min(77vw,460px);background:radial-gradient(circle,#d4ac6552,transparent 62%);filter:blur(28px);z-index:0;pointer-events:none;animation:ciBreathe 7s ease-in-out infinite alternate}
+@keyframes ciBreathe{to{opacity:.5;transform:scale(1.14)}}
+.ci-envelope-trigger{position:relative;display:block;background:transparent;border:0;padding:0;margin:0;
+  width:min(400px,78vw);aspect-ratio:1.43;z-index:2;cursor:pointer;overflow:visible;outline-offset:14px;
+  animation:ciEnvelopeFloat 6s ease-in-out infinite alternate}
+.ci-envelope-trigger:disabled{cursor:default;opacity:1}
+@keyframes ciEnvelopeFloat{50%{transform:translateY(-12px) rotate(.5deg)}}
+.ci-envelope{position:absolute;display:block;inset:0;transform-style:preserve-3d;filter:drop-shadow(0 35px 33px #05091ca0)}
+.ci-envelope-back{position:absolute;display:block;inset:0;background:linear-gradient(145deg,#e8cd9f,#b99868);
+ border-radius:7px;z-index:1}
+.ci-card{position:absolute;display:block;left:50%;bottom:7%;width:78%;height:111%;
+ background:linear-gradient(145deg,#16264b,#26375d 60%,#0c1730);
+ border:8px solid #f5ecdb;box-shadow:0 8px 45px #080d20a3;
+ transform:translate(-50%,34%) scale(.84);transform-origin:center center;z-index:2;
+ transition:transform 1.35s cubic-bezier(.18,.8,.17,1),opacity .95s ease,filter 1.35s ease;
+ will-change:transform;overflow:hidden}
+.ci-card-border{position:absolute;inset:7px;border:1px solid #d9bd7b70;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px;color:#f6ead3}
+.ci-card-border svg{color:#e6c88d;flex-shrink:0}
+.ci-card-script{font-family:'Great Vibes',cursive;color:#e3c38b;font-size:clamp(23px,3vw,37px);line-height:1.05;margin-top:4px}
+.ci-card-graduate{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(20px,3vw,31px);line-height:1.05;font-weight:600}
+.ci-card-degree{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(12px,2vw,17px);line-height:1.2}
+.ci-card-divider{color:#d6b574;font-size:12px;letter-spacing:.5em}
+.ci-card-invited{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:#c8b589}
+.ci-card-guest{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(20px,2.6vw,29px);font-weight:600;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-card-border small{font-size:8px;letter-spacing:.12em;color:#d0b67d}
+.ci-envelope-flap{position:absolute;left:0;right:0;top:0;height:59%;display:block;
+ background:linear-gradient(180deg,#f3dfba,#c9a777);clip-path:polygon(0 0,100% 0,50% 100%);
+ transform-origin:50% 0;transform:rotateX(0deg);backface-visibility:visible;z-index:6;
+ transition:transform 1.08s cubic-bezier(.22,.7,.2,1),z-index 0s linear .4s}
+.ci-envelope-pocket{position:absolute;display:block;inset:0;background:linear-gradient(155deg,#ecd3a9 2%,#cba879 60%,#b89667 100%);
+ clip-path:polygon(0 0,50% 52%,100% 0,100% 100%,0 100%);border-radius:0 0 7px 7px;z-index:4}
+.ci-envelope-seal{position:absolute;left:50%;top:54%;width:53px;height:53px;display:grid;place-items:center;
+ transform:translate(-50%,-50%) scale(1);border-radius:50%;z-index:7;
+ background:linear-gradient(145deg,#b5874f,#8f673e);border:3px solid #dfc494;outline:1px solid #8b633a;
+ color:#fff3da;font:29px 'Great Vibes',cursive;box-shadow:0 8px 14px #0005;
+ transition:opacity .35s ease,transform .5s ease}
+.ci-stage-shadow{position:absolute;bottom:8%;width:min(330px,61vw);height:27px;background:#0008;filter:blur(15px);
+ border-radius:50%;pointer-events:none;transition:opacity .8s ease}
+.ci-actions{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:18px;
+ transition:opacity .6s ease,transform .6s ease}
+.ci-open-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;
+ min-height:50px;padding:14px 34px;border:0;border-radius:100px;
+ background:linear-gradient(110deg,#d8b474,#f5dfb3 48%,#c59b60);color:#101b31;
+ font-size:14px;font-weight:700;box-shadow:0 13px 32px #0005,0 0 35px #cfaa6534;
+ transition:transform .3s ease,box-shadow .3s ease}
+.ci-open-button:hover{transform:scale(1.04) translateY(-2px);box-shadow:0 16px 36px #0006,0 0 46px #e6c17a55}
+.ci-open-button:disabled{opacity:1;cursor:default}
+.ci-date{font-size:10px;letter-spacing:.25em;color:#e0bf7b}
+.ci-date span{padding:0 13px}
+.ci-audio-warning{font-size:11px;color:#e1c99e;max-width:410px;line-height:1.6;margin:0}
+.ci-transition-glow{position:absolute;inset:0;pointer-events:none;z-index:9;opacity:0;
+ background:radial-gradient(circle at 50% 52%,#f5e7c9 0%,#e4c79344 28%,transparent 80%);
+ transition:opacity 1.15s ease}
+/* El sobre primero se abre, después la tarjeta sale y finalmente ocupa la pantalla. */
+.ci-opening .ci-envelope-trigger,.ci-revealing .ci-envelope-trigger,.ci-zooming .ci-envelope-trigger{animation:none}
+.ci-opening .ci-envelope-seal,.ci-revealing .ci-envelope-seal,.ci-zooming .ci-envelope-seal{
+ opacity:0;transform:translate(-50%,-50%) scale(.25)}
+.ci-opening .ci-envelope-flap,.ci-revealing .ci-envelope-flap,.ci-zooming .ci-envelope-flap{transform:rotateX(180deg);z-index:3}
+.ci-revealing .ci-card{transform:translate(-50%,-43%) scale(1.06);z-index:7}
+.ci-zooming .ci-card{transform:translate(-50%,-43%) scale(6.2);z-index:8;filter:brightness(1.25)}
+.ci-revealing .ci-heading,.ci-revealing .ci-actions,.ci-zooming .ci-heading,.ci-zooming .ci-actions{
+ opacity:0;transform:translateY(-18px);pointer-events:none}
+.ci-revealing .ci-stage-shadow,.ci-zooming .ci-stage-shadow{opacity:.15}
+.ci-zooming .ci-transition-glow{opacity:.95;transition-delay:.95s}
+@media(max-width:620px){
+ .ci-screen{padding:20px 15px 32px}
+ .ci-heading h1{font-size:clamp(30px,8.5vw,42px)}
+ .ci-heading p{font-size:12px}
+ .ci-eyebrow{font-size:8px;letter-spacing:.21em}
+ .ci-stage{height:clamp(300px,41vh,400px)}
+ .ci-envelope-trigger{width:min(340px,81vw)}
+ .ci-card{border-width:6px}
+ .ci-card-border{inset:4px;padding:7px;gap:3px}
+ .ci-card-script{font-size:26px}
+ .ci-card-graduate{font-size:23px}
+ .ci-card-degree{font-size:13px}
+ .ci-card-guest{font-size:20px}
+ .ci-card-invited{font-size:7px}
+ .ci-card-border small{font-size:7px}
+ .ci-card-border svg{height:25px;width:25px}
+ .ci-zooming .ci-card{transform:translate(-50%,-43%) scale(6.3)}
+}
+@media(prefers-reduced-motion:reduce){
+ .ci-spotlights,.ci-ambient-particles,.ci-stage-ring,.ci-stage-halo,.ci-envelope-trigger{animation:none!important}
+ .ci-card,.ci-envelope-flap,.ci-actions,.ci-heading,.ci-transition-glow{transition:none!important}
+}

@@ -131,9 +131,75 @@ function Confetti({active}:{active:boolean}) {
 }
 
 
+
+type IntroPhase = 'idle' | 'opening' | 'revealing' | 'zooming' | 'done';
+
+function CinematicIntro({
+  guest,settings,phase,onOpen,unsupportedMusic
+}:{
+  guest:Guest;
+  settings:EventSettings;
+  phase:IntroPhase;
+  onOpen:()=>void;
+  unsupportedMusic:boolean;
+}) {
+  const animating = phase!=='idle';
+  return <div className={`ci-screen ci-${phase}`}>
+    <div className="ci-spotlights" aria-hidden="true"/>
+    <div className="ci-ambient-particles" aria-hidden="true">
+      {Array.from({length:20},(_,i)=><i key={i} style={{
+        '--ci-x':`${(i*41+7)%100}%`,
+        '--ci-y':`${(i*29+5)%100}%`,
+        '--ci-delay':`${-(i%8)}s`
+      } as CSSProperties}/>)}
+    </div>
+    <div className="ci-heading">
+      <span className="ci-eyebrow">HAY MOMENTOS QUE MERECEN CELEBRARSE</span>
+      <h1>Hay algo <em>especial</em> para ti</h1>
+      <p>Una historia de sueños, esfuerzo y nuevas oportunidades.</p>
+    </div>
+    <div className="ci-stage">
+      <div className="ci-stage-ring" aria-hidden="true"/>
+      <div className="ci-stage-halo" aria-hidden="true"/>
+      <button type="button" className="ci-envelope-trigger" onClick={onOpen} disabled={animating} aria-label="Abrir el sobre y descubrir la invitación">
+        <span className="ci-envelope">
+          <span className="ci-envelope-back"/>
+          <span className="ci-card">
+            <span className="ci-card-border">
+              <GraduationCap size={32} strokeWidth={1.4}/>
+              <span className="ci-card-script">Mi gran día</span>
+              <span className="ci-card-graduate">{settings.graduate_name}</span>
+              <span className="ci-card-degree">{settings.degree}</span>
+              <span className="ci-card-divider">✦ ✧ ✦</span>
+              <span className="ci-card-invited">Invitación especial para</span>
+              <strong className="ci-card-guest">{guest.name}</strong>
+              <small>18 DICIEMBRE 2026 · 6:00 P. M.</small>
+            </span>
+          </span>
+          <span className="ci-envelope-flap"/>
+          <span className="ci-envelope-pocket"/>
+          <span className="ci-envelope-seal">ℳ</span>
+        </span>
+      </button>
+      <span className="ci-stage-shadow" aria-hidden="true"/>
+    </div>
+    <div className="ci-actions">
+      <button type="button" className="ci-open-button" onClick={onOpen} disabled={animating}>
+        {animating ? 'Descubriendo tu invitación...' : 'Abrir mi invitación'}
+        <Sparkles size={18}/>
+      </button>
+      <div className="ci-date">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
+      {unsupportedMusic && <p className="ci-audio-warning" role="status">Para escuchar la música de fondo, configura un archivo MP3 en Personalización.</p>}
+    </div>
+    <div className="ci-transition-glow" aria-hidden="true"/>
+  </div>;
+}
+
 function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<void>}) {
   const { settings, guest } = data;
   const [opened,setOpened] = useState(false);
+  const [introPhase,setIntroPhase] = useState<IntroPhase>('idle');
+  const introTimersRef = useRef<number[]>([]);
   const [confetti,setConfetti] = useState(false);
   const [status,setStatus] = useState<'confirmed'|'declined'>(guest.status==='declined'?'declined':'confirmed');
   const [attendees,setAttendees] = useState(guest.attending_count || 1);
@@ -212,7 +278,27 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
     timer=window.setTimeout(next,tourStepRef.current===0?12500:9000);
     return ()=>{stopped=true;window.clearTimeout(timer);window.removeEventListener('wheel',pause);window.removeEventListener('touchstart',pause);window.removeEventListener('keydown',pause);};
   },[opened,autoTour]);
-  const start = () => {if(opened)return;activateAudio();setOpened(true);setConfetti(true);window.setTimeout(()=>setConfetti(false),6500);};
+  // La música comienza con el gesto de abrir el sobre; no esperamos las animaciones.
+  // Los temporizadores se limpian al salir de la invitación.
+  useEffect(()=>()=>{introTimersRef.current.forEach(id=>window.clearTimeout(id));},[]);
+  const start = () => {
+    if(opened || introPhase!=='idle') return;
+    activateAudio();
+    const finish = () => {
+      setIntroPhase('done');
+      setOpened(true);
+      setConfetti(true);
+      introTimersRef.current.push(window.setTimeout(()=>setConfetti(false),6500));
+    };
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      finish();
+      return;
+    }
+    setIntroPhase('opening');
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('revealing'),1050));
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('zooming'),2350));
+    introTimersRef.current.push(window.setTimeout(finish,3900));
+  };
   const save = async (e:FormEvent) => {
     e.preventDefault();setError('');setSaving(true);
     try {await submitRSVP(guest.share_token,status,status==='confirmed'?attendees:0,message);setSaved(true);await onRefresh();setConfetti(true);window.setTimeout(()=>setConfetti(false),6500);}
@@ -234,16 +320,7 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
     />}
     <Confetti active={confetti}/>
 
-    {!opened ? <div className="envelope-screen">
-      <div className="math-stars" aria-hidden="true"><span>∑</span><span>∞</span><span>π</span><span>√</span><span>∫</span><span>α</span><span>≡</span></div>
-      <div className="envelope-intro fade-in-down"><div className="tiny-line"/><p>HAY MOMENTOS QUE MERECEN CELEBRARSE</p><h1>Una invitación <em>especial</em> para ti</h1></div>
-      <div className="envelope" onClick={start} role="button" tabIndex={0} onKeyDown={e=>e.key==='Enter'&&start()} aria-label="Abrir invitación personalizada">
-        <div className="envelope-back"/><div className="envelope-letter"><GraduationCap size={40}/><span>Con mucho cariño</span><strong>{guest.name}</strong><i>✧</i></div><div className="envelope-flap"/><div className="envelope-front"/><div className="wax-seal">ℳ</div>
-      </div>
-      <button type="button" className="primary gold-btn envelope-cta" onClick={start}>Abrir mi invitación <Sparkles size={17}/></button>
-      <div className="envelope-footer">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
-      {!hasCloud && selectedMusic && !musicUrl && <p role="status" style={{marginTop:14,fontSize:12,color:'#e0c594',maxWidth:480,textAlign:'center'}}>La música aún tiene un enlace de YouTube: para escucharla sin video necesitas configurar un archivo MP3 en Personalización.</p>}
-    </div> : <>
+    {!opened ? <CinematicIntro guest={guest} settings={settings} phase={introPhase} onOpen={start} unsupportedMusic={Boolean(selectedMusic && !musicUrl)}/> : <>
       <header className="invite-nav"><span className="invite-brand"><GraduationCap size={19}/> <span>Mi graduación</span></span><div><span className="invite-nav-tag">18 DIC 2026</span><button type="button" className="nav-cinema" onClick={()=>setAutoTour(v=>!v)} aria-label={autoTour?'Pausar recorrido automático':'Reanudar recorrido automático'} title={autoTour?'Pausar recorrido automático':'Reanudar recorrido automático'}>{autoTour?<Pause size={15}/>:<Play size={15}/>} <span>{autoTour?'Pausar recorrido':'Continuar recorrido'}</span></button>{!!musicUrl && <button type="button" className="nav-music" onClick={toggleAudio} title={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'} aria-label={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'}>{musicStatus === 'playing' ? <Volume2 size={17}/> : <Music2 size={17}/>}</button>}</div></header>
       <main>
         <section className="invite-hero">
