@@ -67,7 +67,7 @@ export async function signUp(email: string, password: string) {
 export async function signOut() { if (supabase) { const { error } = await supabase.auth.signOut(); guard(error); } }
 
 export async function loadDashboard(): Promise<DashboardData> {
-  if (isLocalMode()) return copy(readDemo());
+  if (!supabase || isLocalMode()) return copy(readDemo());
   const user = await currentUser(); if (!user) throw new Error('No se pudo establecer el acceso automático a Supabase. Activa Anonymous Sign-Ins.');
   const fetched = await supabase.from('events').select('*').eq('owner_id', user.id).order('created_at').limit(1);
   guard(fetched.error);
@@ -86,22 +86,22 @@ export async function loadDashboard(): Promise<DashboardData> {
   return { settings, groups: (groups.data ?? []) as GuestGroup[], guests: (guests.data ?? []) as Guest[] };
 }
 export async function saveSettings(settings: EventSettings): Promise<void> {
-  if (isLocalMode()) { writeDemo({ ...readDemo(), settings }); return; }
+  if (!supabase || isLocalMode()) { writeDemo({ ...readDemo(), settings }); return; }
   const { id: _id, owner_id: _owner, ...patch } = settings;
   void _id; void _owner;
   const { error } = await supabase.from('events').update(patch).eq('id', settings.id); guard(error);
 }
 export async function saveGroup(group: GuestGroup) {
-  if (isLocalMode()) { const d = readDemo(); d.groups = [group, ...d.groups.filter(g => g.id !== group.id)]; writeDemo(d); return; }
+  if (!supabase || isLocalMode()) { const d = readDemo(); d.groups = [group, ...d.groups.filter(g => g.id !== group.id)]; writeDemo(d); return; }
   const { error } = await supabase.from('guest_groups').upsert(group); guard(error);
 }
 export async function removeGroup(id: string) {
-  if (isLocalMode()) { const d = readDemo(); d.groups = d.groups.filter(g => g.id !== id); d.guests = d.guests.map(g => g.group_id === id ? { ...g, group_id: null } : g); writeDemo(d); return; }
+  if (!supabase || isLocalMode()) { const d = readDemo(); d.groups = d.groups.filter(g => g.id !== id); d.guests = d.guests.map(g => g.group_id === id ? { ...g, group_id: null } : g); writeDemo(d); return; }
   const { error } = await supabase.from('guest_groups').delete().eq('id', id); guard(error);
 }
 export async function saveGuest(guest: Guest) {
   if (guest.song_variant !== 'default') {
-    if (isLocalMode()) {
+    if (!supabase || isLocalMode()) {
       const taken = readDemo().guests.find(g => g.song_variant === guest.song_variant && g.id !== guest.id);
       if (taken) throw new Error(`Esa canción especial ya está asignada a ${taken.name}. Solo puede usarse en una invitación.`);
     } else {
@@ -110,11 +110,11 @@ export async function saveGuest(guest: Guest) {
       if (data?.length) throw new Error(`Esa canción especial ya está asignada a ${data[0].name}. Solo puede usarse en una invitación.`);
     }
   }
-  if (isLocalMode()) { const d = readDemo(); d.guests = [guest, ...d.guests.filter(g => g.id !== guest.id)]; writeDemo(d); return; }
+  if (!supabase || isLocalMode()) { const d = readDemo(); d.guests = [guest, ...d.guests.filter(g => g.id !== guest.id)]; writeDemo(d); return; }
   const { error } = await supabase.from('guests').upsert(guest); guard(error);
 }
 export async function removeGuest(id: string) {
-  if (isLocalMode()) { const d = readDemo(); d.guests = d.guests.filter(g => g.id !== id); writeDemo(d); return; }
+  if (!supabase || isLocalMode()) { const d = readDemo(); d.guests = d.guests.filter(g => g.id !== id); writeDemo(d); return; }
   const { error } = await supabase.from('guests').delete().eq('id', id); guard(error);
 }
 export async function getPublicInvitation(token: string): Promise<PublicInvite | null> {
@@ -140,7 +140,7 @@ export async function submitRSVP(token: string, status: Exclude<RSVPStatus, 'pen
   if (!data?.success) throw new Error(data?.error || 'No fue posible guardar la respuesta.');
 }
 export async function uploadAsset(file: File, section: string, userId: string): Promise<string> {
-  if (isLocalMode()) throw new Error('La subida de MP3 requiere activar Anonymous Sign-Ins en Supabase para guardar los archivos en la nube. Mientras tanto puedes colocar una URL pública de MP3.');
+  if (!supabase || isLocalMode()) throw new Error('La subida de MP3 requiere activar Anonymous Sign-Ins en Supabase para guardar los archivos en la nube. Mientras tanto puedes colocar una URL pública de MP3.');
   const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
   const allowed = ['jpg','jpeg','png','webp','gif','mp3','m4a','ogg','wav'];
   if (!allowed.includes(ext)) throw new Error('Formato no permitido. Utiliza JPG, PNG, WEBP, MP3, M4A, OGG o WAV.');
