@@ -83,6 +83,48 @@ function GraduatesPhoto({src,index}:{src:string;index:number}) {
     <span className="polaroid-caption">{['Un sueño','Un logro','Un nuevo comienzo'][index]}</span>
   </div>;
 }
+
+function FloatingLights() {
+  return <div className="cinematic-lights" aria-hidden="true">{Array.from({length:24},(_,i)=><i key={i} style={{
+    '--cx':`${(i*29+13)%100}%`,
+    '--cy':`${(i*17+11)%100}%`,
+    '--cd':`${-(i*7%14)}s`,
+    '--cs':`${2+(i%3)}px`,
+    '--ct':`${7+(i%8)}s`
+  } as CSSProperties}/>)}</div>;
+}
+
+function PhotoStory({photos,active}:{photos:string[];active:number}) {
+  if (!photos.length) return null;
+  const photo=photos[active % photos.length];
+  return <section className="photo-story-section reveal">
+    <FloatingLights/>
+    <div className="story-frame">
+      <div className="story-photo">
+        <img key={photo} src={photo} alt={`Fotografía del recuerdo ${active % photos.length + 1}`} loading="lazy"/>
+        <span className="story-stamp">✦ 18 · 12 · 2026</span>
+      </div>
+      <div className="story-caption"><span className="section-eyebrow">LOS RECUERDOS QUE NOS TRAJERON HASTA AQUÍ</span>
+        <h2>Una historia escrita <em>con esfuerzo y corazón</em></h2>
+        <p>Hay momentos que parecen pequeños, hasta que miramos atrás y descubrimos todo lo que significaron.</p>
+        <div className="story-pagination" aria-hidden="true">{photos.map((_,i)=><span key={i} className={i===active%photos.length?'active':''}/>)}</div>
+      </div>
+    </div>
+  </section>;
+}
+function Filmstrip({photos}:{photos:string[]}) {
+  if(!photos.length)return null;
+  const repeated=[...photos,...photos,...photos];
+  return <section className="filmstrip-section reveal">
+    <div className="section-eyebrow">INSTANTÁNEAS DE UN SUEÑO</div>
+    <h2>Momentos que <em>siempre recordaremos</em></h2>
+    <p className="section-lead">Cada foto cuenta un pedacito de esta historia.</p>
+    <div className="filmstrip-window" aria-label={`Galería de ${photos.length} fotografías`}>
+      <div className="filmstrip-track" aria-hidden="true">{repeated.map((url,i)=><div className="filmstrip-frame" key={`${i}-${url}`}><img src={url} loading="lazy" alt=""/><span>✦ {String(i%photos.length+1).padStart(2,'0')}</span></div>)}</div>
+    </div>
+  </section>;
+}
+
 function Confetti({active}:{active:boolean}) {
   if (!active) return null;
   return <div className="confetti" aria-hidden="true">{Array.from({length:65},(_,i)=><i key={i} style={{'--x':`${(i*37)%100}vw`,'--delay':`${(i*7)%17/10}s`,'--duration':`${3+(i%7)/4}s`,'--angle':`${i*31}deg`,'--tone':i%3===0?'#dfbc76':i%3===1?'#fff5df':'#9db3d8'} as CSSProperties}/>)}</div>;
@@ -100,6 +142,10 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
   const [saved,setSaved] = useState(false);
   const [error,setError] = useState('');
   const [giftOpen,setGiftOpen] = useState<'cash'|'ideas'|null>(null);
+  const [photoIndex,setPhotoIndex] = useState(0);
+  const [autoTour,setAutoTour] = useState(true);
+  const tourStepRef=useRef(0);
+  const usablePhotos = settings.photo_urls.filter(src=>Boolean(safeHref(src))).slice(0,12).map(src=>safeHref(src));
   // La reproducción empieza con el gesto del usuario al abrir el sobre.
   // YouTube no ofrece audio invisible de fondo: para esa experiencia usamos
   // archivos de audio reproducibles directamente (MP3, M4A, OGG, WAV).
@@ -139,6 +185,33 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
     document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
     return ()=>obs.disconnect();
   },[opened]);
+  useEffect(()=>{
+    if(!opened || usablePhotos.length<2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const timer=window.setInterval(()=>setPhotoIndex(i=>(i+1)%usablePhotos.length),4800);
+    return ()=>window.clearInterval(timer);
+  },[opened,usablePhotos.length]);
+  useEffect(()=>{
+    if(!opened || !autoTour || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    let timer:number;
+    let stopped=false;
+    const chapters=['.invite-hero','.photo-section','.count-section','.photo-story-section','.detail-section','.invitee-section','.filmstrip-section','.gifts-section'];
+    const pause=()=>setAutoTour(false);
+    window.addEventListener('wheel',pause,{passive:true});
+    window.addEventListener('touchstart',pause,{passive:true});
+    window.addEventListener('keydown',pause);
+    const next=()=>{
+      if(stopped)return;
+      if(document.visibilityState==='hidden'){timer=window.setTimeout(next,4000);return;}
+      let target:Element|null=null;
+      while(tourStepRef.current<chapters.length-1 && !target){
+        tourStepRef.current++;
+        target=document.querySelector(chapters[tourStepRef.current]);
+      }
+      if(target){target.scrollIntoView({behavior:'smooth',block:'start'});timer=window.setTimeout(next,11000);}
+    };
+    timer=window.setTimeout(next,tourStepRef.current===0?12500:9000);
+    return ()=>{stopped=true;window.clearTimeout(timer);window.removeEventListener('wheel',pause);window.removeEventListener('touchstart',pause);window.removeEventListener('keydown',pause);};
+  },[opened,autoTour]);
   const start = () => {if(opened)return;activateAudio();setOpened(true);setConfetti(true);window.setTimeout(()=>setConfetti(false),6500);};
   const save = async (e:FormEvent) => {
     e.preventDefault();setError('');setSaving(true);
@@ -171,10 +244,12 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
       <div className="envelope-footer">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
       {!hasCloud && selectedMusic && !musicUrl && <p role="status" style={{marginTop:14,fontSize:12,color:'#e0c594',maxWidth:480,textAlign:'center'}}>La música aún tiene un enlace de YouTube: para escucharla sin video necesitas configurar un archivo MP3 en Personalización.</p>}
     </div> : <>
-      <header className="invite-nav"><span className="invite-brand"><GraduationCap size={19}/> <span>Mi graduación</span></span><div><span className="invite-nav-tag">18 DIC 2026</span>{!!musicUrl && <button type="button" className="nav-music" onClick={toggleAudio} title={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'} aria-label={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'}>{musicStatus === 'playing' ? <Volume2 size={17}/> : <Music2 size={17}/>}</button>}</div></header>
+      <header className="invite-nav"><span className="invite-brand"><GraduationCap size={19}/> <span>Mi graduación</span></span><div><span className="invite-nav-tag">18 DIC 2026</span><button type="button" className="nav-cinema" onClick={()=>setAutoTour(v=>!v)} aria-label={autoTour?'Pausar recorrido automático':'Reanudar recorrido automático'} title={autoTour?'Pausar recorrido automático':'Reanudar recorrido automático'}>{autoTour?<Pause size={15}/>:<Play size={15}/>} <span>{autoTour?'Pausar recorrido':'Continuar recorrido'}</span></button>{!!musicUrl && <button type="button" className="nav-music" onClick={toggleAudio} title={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'} aria-label={musicStatus === 'playing' ? 'Pausar canción' : 'Activar canción'}>{musicStatus === 'playing' ? <Volume2 size={17}/> : <Music2 size={17}/>}</button>}</div></header>
       <main>
         <section className="invite-hero">
           <div className="hero-shine"/><div className="math-stars math-stars-open" aria-hidden="true"><span>∑</span><span>∞</span><span>π</span><span>√</span><span>∫</span><span>α</span><span>≡</span></div>
+          <FloatingLights/>
+          {usablePhotos.length>0&&<div className="hero-photo-orbit" aria-hidden="true"><img src={usablePhotos[photoIndex%usablePhotos.length]} alt=""/></div>}
           <div className="invite-hero-content"><div className="hero-topline"><span/> UNA NOCHE PARA RECORDAR <span/></div>
             <div className="line-illustration"><GraduationCap size={47} strokeWidth={1.1}/><span>✧</span></div>
             <p className="script hero-script">El gran día</p><h1>{settings.graduate_name}</h1><div className="hero-degree"><span>✦</span> {settings.degree} <span>✦</span></div>
@@ -185,14 +260,17 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
         </section>
         <section className="photo-section reveal"><div className="section-eyebrow">CADA SUEÑO TIENE SU HISTORIA</div><h2>La fórmula de <em>un sueño cumplido</em></h2>
           <p className="section-lead">Entre desafíos, números y nuevas oportunidades, cada paso valió la pena. Hoy celebramos todo lo aprendido y lo que está por venir.</p>
-          <div className="polaroid-row">{[0,1,2].map(i=><GraduatesPhoto key={i} src={settings.photo_urls[i] || ''} index={i}/>)}</div>
+          <div className="polaroid-row">{[0,1,2].map(i=><GraduatesPhoto key={i} src={usablePhotos.length ? usablePhotos[(photoIndex+i)%usablePhotos.length] : ''} index={i}/>)}</div>
+          {usablePhotos.length>3&&<p className="photo-count-hint"><Sparkles size={14}/> {usablePhotos.length} fotografías formando parte de esta historia</p>}
         </section>
         <section className="count-section reveal"><GoldStar/><div className="section-eyebrow">CADA SEGUNDO NOS ACERCA</div><h2>Falta poquito para <em>celebrar</em></h2><Countdown date={settings.event_datetime}/><p>El tiempo corre y la emoción crece. ¡Nos vemos muy pronto!</p></section>
+        <PhotoStory photos={usablePhotos} active={photoIndex}/>
         <section className="detail-section reveal" id="detalles"><div className="section-eyebrow">GUARDA ESTA FECHA</div><h2>Fecha, hora <em>y lugar</em></h2><div className="detail-cards">
           <div className="detail-card"><div className="detail-icon"><CalendarDays size={25}/></div><span className="small-label">EL GRAN DÍA</span><h3>Viernes 18 de diciembre</h3><p>2026 · 6:00 de la tarde</p><div className="detail-deco">✦ ✦ ✦</div></div>
           <div className="detail-card"><div className="detail-icon"><MapPin size={26}/></div><span className="small-label">NOS ENCONTRAREMOS EN</span><h3>{settings.venue_name}</h3><p>{settings.venue_address}</p>{safeHref(settings.maps_url) ? <a href={safeHref(settings.maps_url)} target="_blank" rel="noreferrer" className="detail-link">Ver ubicación <ExternalLink size={16}/></a> : <span className="detail-link muted-link">Dirección pendiente</span>}</div>
-        </div><div className="dresscode"><span>✧</span><div><strong>Código de vestuario</strong><p>{settings.dress_code}</p></div><span>✧</span></div></section>
+        </div></section>
         <section className="invitee-section reveal"><div className="section-eyebrow">UN LUGAR RESERVADO PARA TI</div><div className="quota-number">{String(guest.seats).padStart(2,'0')}</div><h2>{guest.seats===1?'Cupo reservado':'Cupos reservados'}</h2><p>{data.group_name ? `Grupo: ${data.group_name}. ` : ''}Preparamos {guest.seats===1?'un espacio especial':'estos espacios especiales'} para que compartamos esta celebración.</p></section>
+        <Filmstrip photos={usablePhotos}/>
         <section className="gifts-section reveal"><Gift size={31} strokeWidth={1.3}/><div className="section-eyebrow">UN DETALLE CON MUCHO CARIÑO</div><h2>Tu presencia es <em>mi mejor regalo</em></h2><p className="section-lead">Si deseas tener un detalle adicional, estas son algunas ideas.</p><div className="gift-cards">
           <button type="button" className={`gift-card ${giftOpen==='cash'?'gift-expanded':''}`} onClick={()=>setGiftOpen(giftOpen==='cash'?null:'cash')}><div className="gift-symbol">✉</div><strong>Lluvia de sobres</strong><span>Un detalle de corazón</span><ChevronDown size={18}/>{giftOpen==='cash'&&<p>{settings.gift_cash_text}</p>}</button>
           <button type="button" className={`gift-card ${giftOpen==='ideas'?'gift-expanded':''}`} onClick={()=>setGiftOpen(giftOpen==='ideas'?null:'ideas')}><div className="gift-symbol">✧</div><strong>Regalo especial</strong><span>Un recuerdo para siempre</span><ChevronDown size={18}/>{giftOpen==='ideas'&&<p>{settings.gift_ideas_text}</p>}</button>
@@ -300,7 +378,7 @@ function Admin() {
       {tab==='guests'&&<><AdminHeading eyebrow="PERSONALIZA Y COMPARTE" title="Mis invitaciones" detail="Cada invitado recibe una experiencia única, con su nombre, cupos y música." action={<button className="primary" onClick={()=>editGuest()}><Plus size={18}/> Nueva invitación</button>}/><div className="admin-card guest-table-card"><div className="table-filters"><div className="search-field"><Search size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar invitado o teléfono..."/></div><select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)}><option value="all">Todos los grupos</option>{data.groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><span className="results-count">{filtered.length} invitaciones</span></div><div className="table-wrap"><table className="admin-table"><thead><tr><th>INVITADO</th><th>GRUPO</th><th>CUPOS</th><th>MÚSICA</th><th>RESPUESTA</th><th>ACCIONES</th></tr></thead><tbody>{filtered.map(g=><tr key={g.id}><td><div className="guest-cell"><span className="avatar-small">{initials(g.name)}</span><div><strong>{g.name}</strong><small>{g.phone || 'Sin número de WhatsApp'}</small></div></div></td><td>{data.groups.find(gr=>gr.id===g.group_id)?.name||<span className="muted">Sin grupo</span>}</td><td><span className="quota-pill"><Users size={13}/>{g.seats}</span></td><td><span className="song-chip"><Music2 size={13}/>{songs[g.song_variant]}</span></td><td><span className={`status-pill ${statusClass[g.status]}`}>{statusText[g.status]}</span></td><td><div className="actions-row"><button title={localMode?'Activa Supabase antes de compartir':'Copiar enlace'} disabled={localMode} onClick={()=>void copyLink(g)}><Copy size={16}/></button>{localMode?<button disabled title="Activa Supabase antes de compartir"><MessageCircle size={16}/></button>:<a href={whatsappUrl(g,data.settings)} title="Enviar por WhatsApp" target="_blank" rel="noreferrer"><MessageCircle size={16}/></a>}<a href={`#/i/${g.share_token}`} title="Ver invitación" target="_blank" rel="noreferrer"><ExternalLink size={16}/></a><button title="Editar" onClick={()=>editGuest(g)}><Pencil size={16}/></button><button title="Eliminar" className="delete-icon" onClick={()=>{if(confirm(`¿Eliminar definitivamente la invitación de ${g.name}?`))void mutate(()=>removeGuest(g.id),'Invitación eliminada.');}}><Trash2 size={16}/></button></div></td></tr>)}</tbody></table>{filtered.length===0&&<div className="table-empty">No hay invitaciones con estos filtros. <button onClick={()=>editGuest()}>Crear una</button></div>}</div></div></>}
       {tab==='groups'&&<><AdminHeading eyebrow="ORGANIZA A TU GENTE" title="Grupos de invitados" detail="Crea grupos como familia, amigos, docentes o compañeros. Después asigna cada invitación." action={<button className="primary" onClick={()=>editGroup()}><Plus size={18}/> Nuevo grupo</button>}/><div className="groups-grid">{data.groups.map(g=><div key={g.id} className="admin-card group-card"><div className="group-card-top"><div className="group-icon"><Users size={24}/></div><div className="actions-row"><button onClick={()=>editGroup(g)} title="Editar grupo"><Edit3 size={16}/></button><button className="delete-icon" onClick={()=>{if(confirm(`¿Eliminar el grupo ${g.name}? Las invitaciones no se borrarán.`))void mutate(()=>removeGroup(g.id),'Grupo eliminado.');}} title="Eliminar grupo"><Trash2 size={16}/></button></div></div><h3>{g.name}</h3><p>{g.notes||'Grupo de invitados especiales'}</p><div className="group-card-footer"><span>{data.guests.filter(guest=>guest.group_id===g.id).length} invitaciones</span><span>{g.default_seats} cupos sugeridos</span></div></div>)}<button className="add-group-card" onClick={()=>editGroup()}><Plus size={30}/><strong>Agregar grupo</strong><span>Organiza mejor tu celebración</span></button></div></>}
       {tab==='responses'&&<><AdminHeading eyebrow="LA EMOCIÓN DE CADA RESPUESTA" title="Confirmaciones" detail="Consulta respuestas actualizadas automáticamente, los cupos utilizados y los mensajes." action={<button className="outline-button" onClick={()=>exportCSV(data)}><Download size={17}/> Exportar CSV</button>}/><div className="metrics-grid metrics-short"><Metric label="Confirmaron" value={confirmed.length} icon={BadgeCheck} suffix="invitaciones"/><Metric label="Personas que asistirán" value={confirmedSeats} icon={Users} suffix="asistentes"/><Metric label="No asistirán" value={declined.length} icon={XCircle} suffix="respuestas"/><Metric label="Faltan por responder" value={data.guests.length-confirmed.length-declined.length} icon={Clock3} suffix="invitaciones"/></div><div className="admin-card responses-card"><div className="card-header"><h3>Listado de respuestas</h3><span>{data.guests.length} invitaciones enviables</span></div><div className="table-wrap"><table className="admin-table"><thead><tr><th>INVITADO</th><th>ESTADO</th><th>ASISTENTES</th><th>MENSAJE</th><th>FECHA</th></tr></thead><tbody>{data.guests.map(g=><tr key={g.id}><td><strong>{g.name}</strong></td><td><span className={`status-pill ${statusClass[g.status]}`}>{statusText[g.status]}</span></td><td>{g.status==='confirmed'?`${g.attending_count} / ${g.seats}`:'—'}</td><td className="message-preview">{g.message||'—'}</td><td>{g.confirmed_at?new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short',timeZone:'America/Bogota'}).format(new Date(g.confirmed_at)):'—'}</td></tr>)}</tbody></table></div></div></>}
-      {tab==='settings'&&settingsDraft&&<><AdminHeading eyebrow="DISEÑA UNA EXPERIENCIA ÚNICA" title="Personaliza tu evento" detail="Estos detalles se reflejarán automáticamente en todas las invitaciones." action={<button className="primary" disabled={savingSettings} onClick={()=>void mutateSettings()}><Check size={18}/>{savingSettings?'Guardando...':'Guardar cambios'}</button>}/><div className="settings-layout"><div className="settings-main"><div className="admin-card settings-card"><div className="card-header"><div><h3><GraduationCap size={20}/> Datos de la graduación</h3><p>La información principal que verán tus invitados.</p></div></div><div className="form-grid"><Field label="Nombre del graduando" value={settingsDraft.graduate_name} onChange={v=>updateSettings('graduate_name',v)}/><Field label="Título o carrera" value={settingsDraft.degree} onChange={v=>updateSettings('degree',v)}/><Field label="Frase de portada" value={settingsDraft.headline} onChange={v=>updateSettings('headline',v)}/><Field label="Fecha y hora (Colombia)" type="datetime-local" value={dateForInput(settingsDraft.event_datetime)} onChange={v=>updateSettings('event_datetime',`${v}:00-05:00`)}/><Field label="Nombre del lugar" value={settingsDraft.venue_name} onChange={v=>updateSettings('venue_name',v)}/><Field label="Dirección completa" value={settingsDraft.venue_address} onChange={v=>updateSettings('venue_address',v)}/><Field label="Enlace de Google Maps" value={settingsDraft.maps_url} onChange={v=>updateSettings('maps_url',v)} placeholder="https://maps.google.com/..."/><Field label="Código de vestuario" value={settingsDraft.dress_code} onChange={v=>updateSettings('dress_code',v)}/><Field label="Fecha límite de confirmación" type="date" value={settingsDraft.rsvp_deadline} onChange={v=>updateSettings('rsvp_deadline',v)}/></div><label className="block-label">Mensaje de bienvenida<textarea value={settingsDraft.intro} rows={3} onChange={e=>updateSettings('intro',e.target.value)}/></label><label className="block-label">Mensaje final<textarea value={settingsDraft.closing_message} rows={2} onChange={e=>updateSettings('closing_message',e.target.value)}/></label></div>
+      {tab==='settings'&&settingsDraft&&<><AdminHeading eyebrow="DISEÑA UNA EXPERIENCIA ÚNICA" title="Personaliza tu evento" detail="Estos detalles se reflejarán automáticamente en todas las invitaciones." action={<button className="primary" disabled={savingSettings} onClick={()=>void mutateSettings()}><Check size={18}/>{savingSettings?'Guardando...':'Guardar cambios'}</button>}/><div className="settings-layout"><div className="settings-main"><div className="admin-card settings-card"><div className="card-header"><div><h3><GraduationCap size={20}/> Datos de la graduación</h3><p>La información principal que verán tus invitados.</p></div></div><div className="form-grid"><Field label="Nombre del graduando" value={settingsDraft.graduate_name} onChange={v=>updateSettings('graduate_name',v)}/><Field label="Título o carrera" value={settingsDraft.degree} onChange={v=>updateSettings('degree',v)}/><Field label="Frase de portada" value={settingsDraft.headline} onChange={v=>updateSettings('headline',v)}/><Field label="Fecha y hora (Colombia)" type="datetime-local" value={dateForInput(settingsDraft.event_datetime)} onChange={v=>updateSettings('event_datetime',`${v}:00-05:00`)}/><Field label="Nombre del lugar" value={settingsDraft.venue_name} onChange={v=>updateSettings('venue_name',v)}/><Field label="Dirección completa" value={settingsDraft.venue_address} onChange={v=>updateSettings('venue_address',v)}/><Field label="Enlace de Google Maps" value={settingsDraft.maps_url} onChange={v=>updateSettings('maps_url',v)} placeholder="https://maps.google.com/..."/><Field label="Fecha límite de confirmación" type="date" value={settingsDraft.rsvp_deadline} onChange={v=>updateSettings('rsvp_deadline',v)}/></div><label className="block-label">Mensaje de bienvenida<textarea value={settingsDraft.intro} rows={3} onChange={e=>updateSettings('intro',e.target.value)}/></label><label className="block-label">Mensaje final<textarea value={settingsDraft.closing_message} rows={2} onChange={e=>updateSettings('closing_message',e.target.value)}/></label></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Music2 size={20}/> Música de las invitaciones</h3><p>Configura un archivo de audio directo para que suene al abrir el sobre, sin video ni otro botón Play.</p></div></div><div className="asset-stack">{([{key:'music_default_url',startKey:'music_default_start',endKey:'music_default_end',label:'Canción principal · todos los invitados',section:'music-main'},{key:'music_special_1_url',startKey:'music_special_1_start',endKey:'music_special_1_end',label:'Canción diferente · invitado especial 1',section:'music-special-1'},{key:'music_special_2_url',startKey:'music_special_2_start',endKey:'music_special_2_end',label:'Canción diferente · invitado especial 2',section:'music-special-2'}] as const).map(item=><MusicLinkField key={item.key} label={item.label} value={settingsDraft[item.key]} onValue={v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev)} onUpload={f=>handleUpload(f,item.section,v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev))} uploading={uploading===item.section}/>)}</div><p className="form-help"><Volume2 size={16}/> Al abrir el sobre se repetirá el fragmento de 30 segundos de forma continua, hasta que pauses la música o cierres la invitación. Usa un enlace directo a MP3, M4A, OGG o WAV. Los enlaces de YouTube no permiten música invisible sin el video; reemplázalos para activar este modo.</p></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Gift size={20}/> Ideas de regalos</h3><p>Puedes mostrar las dos opciones a todos los invitados.</p></div></div><label className="block-label">Opción 1 · Lluvia de sobres<textarea value={settingsDraft.gift_cash_text} rows={3} onChange={e=>updateSettings('gift_cash_text',e.target.value)}/></label><label className="block-label">Opción 2 · Regalo especial<textarea value={settingsDraft.gift_ideas_text} rows={3} onChange={e=>updateSettings('gift_ideas_text',e.target.value)}/></label></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Sparkles size={20}/> Galería de recuerdos</h3><p>Agrega hasta tres fotografías del graduando.</p></div></div><div className="asset-stack">{[0,1,2].map(i=><AssetField key={i} label={`Fotografía ${i+1}`} type="image" value={settingsDraft.photo_urls[i]||''} onValue={v=>updateSettings('photo_urls',[...settingsDraft.photo_urls.slice(0,i),v,...settingsDraft.photo_urls.slice(i+1)])} onUpload={f=>handleUpload(f,`photo-${i}`,v=>updateSettings('photo_urls',[...settingsDraft.photo_urls.slice(0,i),v,...settingsDraft.photo_urls.slice(i+1)]))} uploading={uploading===`photo-${i}`}/>)}</div></div>
