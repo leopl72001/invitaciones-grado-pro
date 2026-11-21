@@ -32,7 +32,7 @@ Abre `http://localhost:5173`.
 
 1. Crea un proyecto en [Supabase](https://supabase.com/dashboard).
 2. Abre **SQL Editor** y ejecuta íntegro `supabase/schema.sql`. Crea las tablas, políticas RLS, dos funciones de invitado y el bucket público de fotografías/música.
-3. Abre **Authentication → Providers → Email**. Activa correo y contraseña. Si quieres registro inmediato en las pruebas, configura la confirmación por email según tus necesidades.
+3. Abre **Authentication → Sign In / Providers → Anonymous Sign-Ins** y habilita el acceso anónimo. GradoPro creará una sesión automáticamente sin pedir correo o contraseña.
 4. Abre **Project Settings → API** y copia `Project URL` y la **anon / publishable key**. **Nunca uses la clave service_role** en esta aplicación.
 5. En el proyecto, copia `.env.example` a `.env` y escribe:
 
@@ -41,7 +41,7 @@ Abre `http://localhost:5173`.
    VITE_SUPABASE_ANON_KEY=TU_CLAVE_PUBLICA
    ```
 
-6. Reinicia `npm run dev`, crea una cuenta desde el panel e inicia sesión. La primera vez se creará tu evento.
+6. Reinicia `npm run dev` y abre el panel. No requiere registro; el primer acceso crea una sesión anónima que se conserva en ese navegador y registra tu evento.
 7. En **Personalización**, agrega nombre, dirección, Google Maps, fotos y el enlace de la canción principal; puedes añadir también dos canciones especiales. Pulsa **Guardar cambios**.
 8. Crea grupos, registra invitados, establece cupos y asigna la canción especial solo a las 2 invitaciones que quieras.
 
@@ -107,3 +107,11 @@ Los datos de ejemplo “Familia de ejemplo” e “Invitado especial” sirven p
 ## Activación de la conexión Supabase en GitHub Pages
 
 El workflow de GitHub Pages lee las variables de repositorio `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` durante `npm run build`. Después de configurarlas, un nuevo commit en `main` genera una compilación que incorpora los valores públicos y habilita el acceso a Supabase. Para subir canciones desde la interfaz, primero hay que iniciar sesión en GradoPro con una cuenta de Supabase Auth y haber ejecutado `supabase/schema.sql` en SQL Editor.
+
+## Acceso al panel sin login (noviembre de 2026)
+
+El panel no solicita correo ni contraseña. Usa el método documentado de Supabase `supabase.auth.signInAnonymously()` y las políticas RLS ya instaladas para separar los datos de cada sesión.
+
+**Acción indispensable:** en Supabase, habilita `Authentication → Sign In / Providers → Anonymous Sign-Ins`. Si no lo habilitas, GradoPro muestra instrucciones para activarlo y el botón «Entrar sin contraseña».
+
+**Limitación importante:** esta sesión pertenece al navegador y se guarda localmente. No borres los datos/cookies del sitio ni uses modo incógnito para gestionar el evento: perder la sesión puede impedirte volver a editar los invitados existentes. Los enlaces de los invitados continuarán funcionando en la nube. Para recuperar la gestión desde otro dispositivo será necesario incorporar un mecanismo de recuperación seguro. El panel es público y crear sesiones anónimas está sujeto a uso/abuso; para despliegue comercial hacen falta restricciones adicionales.
