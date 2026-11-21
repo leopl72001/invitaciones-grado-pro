@@ -576,3 +576,186 @@
   .hero-math-universe>span,.hero-math-ring,.hero-math-glow {animation:none!important}
   .confetti-party i{animation:none!important;display:none!important}
 }
+
+
+/* GradoPro 3D Quick Pack — sello visible + profundidad y movimiento continuo.
+   El sello está FUERA de .ci-envelope para evitar que el bolsillo lo tape. */
+.ci-screen .ci-envelope-trigger {
+  isolation:isolate;
+  perspective:1500px;
+  transform-style:preserve-3d;
+}
+.ci-screen .ci-envelope-trigger > .ci-front-seal {
+  position:absolute;
+  left:50%;
+  top:54%;
+  z-index:50 !important;
+  width:62px;
+  height:62px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  transform:translate3d(-50%,-50%,70px) scale(1);
+  opacity:1;
+  color:#ffefcd;
+  font:34px/1 'Great Vibes',cursive;
+  background:
+    radial-gradient(circle at 27% 20%,#f9dda8 0%,#bb8b51 30%,#81562d 75%,#6d441f 100%);
+  border:3px double #f2d59f;
+  outline:2px solid #b78443;
+  outline-offset:3px;
+  box-shadow:0 2px 0 #e9c38a inset,0 0 13px #f1ce8a77,0 13px 25px #26160f99;
+  text-shadow:0 1px 3px #40220c;
+  filter:drop-shadow(0 5px 4px #23190f5a);
+  transition:transform .75s cubic-bezier(.2,.75,.3,1), opacity .45s ease !important;
+  animation:gp-seal-pulse 3.4s ease-in-out infinite;
+}
+.ci-screen .ci-envelope-trigger > .ci-front-seal::after {
+  content:'';
+  position:absolute;
+  inset:5px;
+  border:1px solid #ffe0abbb;
+  border-radius:50%;
+  pointer-events:none;
+}
+@keyframes gp-seal-pulse {
+  0%,100%{filter:drop-shadow(0 5px 4px #23190f5a) drop-shadow(0 0 0 #dabb7755)}
+  50%{filter:drop-shadow(0 5px 4px #23190f5a) drop-shadow(0 0 14px #e6c48a7e)}
+}
+.ci-screen.ci-unsealing .ci-envelope-trigger > .ci-front-seal,
+.ci-screen.ci-opening .ci-envelope-trigger > .ci-front-seal,
+.ci-screen.ci-revealing .ci-envelope-trigger > .ci-front-seal,
+.ci-screen.ci-zooming .ci-envelope-trigger > .ci-front-seal {
+  opacity:0;
+  transform:translate3d(-50%,-160%,100px) rotateZ(-30deg) scale(.17);
+  animation:none;
+}
+/* Mantener la tapa por encima mientras gira; luego mostrar la carta con profundidad. */
+.ci-screen.ci-opening .ci-envelope-flap {
+  transform:rotateX(-175deg) !important;
+  transform-origin:50% 0 !important;
+  z-index:12 !important;
+}
+.ci-screen.ci-revealing .ci-envelope-flap {z-index:2 !important}
+.ci-screen.ci-revealing .ci-card {
+  filter:drop-shadow(0 18px 24px #050b21aa);
+  transition:transform 1.6s cubic-bezier(.16,.74,.17,1),opacity .32s ease !important;
+}
+
+/* Atributos 3D globales: las tarjetas no quedan estáticas una vez abierto. */
+.invitation.invitation-opened .photo-section,
+.invitation.invitation-opened .detail-section,
+.invitation.invitation-opened .count-section,
+.invitation.invitation-opened .photo-story-section {
+  perspective:1100px;
+}
+.invitation.invitation-opened .polaroid-row {
+  perspective:1100px;
+  transform-style:preserve-3d;
+  animation:gp-photo-group-sway 12s ease-in-out infinite alternate;
+  will-change:transform;
+}
+@keyframes gp-photo-group-sway{
+  from{transform:rotateY(-6deg) rotateX(3deg) translate3d(0,3px,0)}
+  to{transform:rotateY(6deg) rotateX(-3deg) translate3d(0,-7px,0)}
+}
+.invitation.invitation-opened .polaroid {
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  will-change:transform;
+  transition:box-shadow .4s ease;
+}
+.invitation.invitation-opened .polaroid-1 {animation:gp-polaroid-left 7s ease-in-out infinite alternate!important}
+.invitation.invitation-opened .polaroid-2 {animation:gp-polaroid-mid 8.2s ease-in-out -1.8s infinite alternate!important}
+.invitation.invitation-opened .polaroid-3 {animation:gp-polaroid-right 7.7s ease-in-out -2.4s infinite alternate!important}
+@keyframes gp-polaroid-left{
+  0%{transform:translate3d(22px,8px,5px) rotate(-11deg) rotateY(-12deg) rotateX(3deg)}
+  100%{transform:translate3d(15px,-17px,47px) rotate(-6deg) rotateY(12deg) rotateX(-4deg)}
+}
+@keyframes gp-polaroid-mid{
+  0%{transform:translate3d(0,-9px,35px) rotate(2deg) rotateY(8deg) rotateX(-3deg)}
+  100%{transform:translate3d(0,-30px,68px) rotate(-3deg) rotateY(-9deg) rotateX(5deg)}
+}
+@keyframes gp-polaroid-right{
+  0%{transform:translate3d(-23px,8px,7px) rotate(11deg) rotateY(14deg) rotateX(-4deg)}
+  100%{transform:translate3d(-15px,-18px,43px) rotate(6deg) rotateY(-12deg) rotateX(4deg)}
+}
+.invitation.invitation-opened .polaroid:hover{
+  animation-play-state:paused!important;
+  box-shadow:0 25px 60px #0009;
+}
+.invitation.invitation-opened .polaroid img{
+  transform-origin:center center;
+  animation:gp-photo-lens 15s ease-in-out infinite alternate;
+}
+@keyframes gp-photo-lens{from{filter:brightness(.97) saturate(.96)}to{filter:brightness(1.07) saturate(1.09)}}
+.invitation.invitation-opened .detail-cards{
+  transform-style:preserve-3d;
+  perspective:1000px;
+}
+.invitation.invitation-opened .detail-card{
+  transform-style:preserve-3d;
+  animation:gp-3d-card 8s ease-in-out infinite alternate;
+  box-shadow:0 16px 32px #040c2238;
+  will-change:transform;
+}
+.invitation.invitation-opened .detail-card:nth-child(2){animation-delay:-4s;animation-direction:alternate-reverse}
+@keyframes gp-3d-card{
+  from{transform:translate3d(0,5px,0) rotateY(-3.5deg) rotateX(2deg)}
+  to{transform:translate3d(0,-8px,23px) rotateY(3.5deg) rotateX(-2deg)}
+}
+.invitation.invitation-opened .detail-card:hover{animation-play-state:paused}
+.invitation.invitation-opened .detail-icon{
+  transform-style:preserve-3d;
+  animation:gp-icon-halo 5s ease-in-out infinite alternate;
+}
+@keyframes gp-icon-halo{
+  from{transform:translateZ(8px) rotateY(-9deg);box-shadow:0 0 0 #d1b07000}
+  to{transform:translateZ(29px) rotateY(9deg);box-shadow:0 0 25px #d1b07066}
+}
+.invitation.invitation-opened .count-card{
+  animation:gp-count-float 6s ease-in-out infinite alternate;
+  will-change:transform;
+}
+.invitation.invitation-opened .count-card:nth-child(2){animation-delay:-1.5s}
+.invitation.invitation-opened .count-card:nth-child(3){animation-delay:-3s}
+.invitation.invitation-opened .count-card:nth-child(4){animation-delay:-4.5s}
+@keyframes gp-count-float{
+  from{transform:translate3d(0,3px,0) rotateX(1deg)}
+  to{transform:translate3d(0,-8px,18px) rotateX(-2deg)}
+}
+.invitation.invitation-opened .story-photo{
+  animation:gp-story-tilt 10s ease-in-out infinite alternate!important;
+  transform-style:preserve-3d;
+}
+@keyframes gp-story-tilt{
+  from{transform:translate3d(0,7px,0) rotate(-5deg) rotateY(-10deg)}
+  to{transform:translate3d(0,-14px,27px) rotate(-1deg) rotateY(10deg)}
+}
+.invitation.invitation-opened .rsvp-ornament{
+  animation:gp-ornament-float 5s ease-in-out infinite alternate;
+}
+@keyframes gp-ornament-float{
+  from{transform:translateY(4px) rotateY(-25deg);opacity:.65}
+  to{transform:translateY(-8px) rotateY(25deg);opacity:1}
+}
+@media (max-width:700px) {
+  .ci-screen .ci-envelope-trigger > .ci-front-seal {width:53px;height:53px;font-size:30px}
+  .invitation.invitation-opened .polaroid-row {animation-duration:16s}
+  .invitation.invitation-opened .detail-card {animation-duration:10s}
+}
+@media (prefers-reduced-motion:reduce) {
+  .ci-screen .ci-envelope-trigger > .ci-front-seal,
+  .invitation.invitation-opened .polaroid-row,
+  .invitation.invitation-opened .polaroid,
+  .invitation.invitation-opened .polaroid img,
+  .invitation.invitation-opened .detail-card,
+  .invitation.invitation-opened .detail-icon,
+  .invitation.invitation-opened .count-card,
+  .invitation.invitation-opened .story-photo,
+  .invitation.invitation-opened .rsvp-ornament {
+    animation:none!important;
+    will-change:auto;
+  }
+}
