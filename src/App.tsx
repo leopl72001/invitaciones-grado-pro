@@ -161,6 +161,15 @@ function CinematicIntro({
     <div className="ci-stage">
       <div className="ci-stage-ring" aria-hidden="true"/>
       <div className="ci-stage-halo" aria-hidden="true"/>
+      <div className="ci-opening-glow" aria-hidden="true"/>
+      <div className="ci-starburst" aria-hidden="true">
+        {Array.from({length:50},(_,i)=><span key={i} style={{
+          '--burst-angle':`${(i*137.507)%360}deg`,
+          '--burst-distance':`${120+(i%7)*29}px`,
+          '--burst-delay':`${(i%9)*0.048}s`,
+          '--burst-size':`${12+(i%4)*6}px`
+        } as CSSProperties}>{i%3===0?'✧':i%3===1?'✦':'✳'}</span>)}
+      </div>
       <button type="button" className="ci-envelope-trigger" onClick={onOpen} disabled={animating} aria-label="Abrir el sobre y descubrir la invitación">
         <span className="ci-envelope">
           <span className="ci-envelope-back"/>
@@ -295,9 +304,9 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
       return;
     }
     setIntroPhase('opening');
-    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('revealing'),1050));
-    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('zooming'),2350));
-    introTimersRef.current.push(window.setTimeout(finish,3900));
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('revealing'),1400));
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('zooming'),3100));
+    introTimersRef.current.push(window.setTimeout(finish,4700));
   };
   const save = async (e:FormEvent) => {
     e.preventDefault();setError('');setSaving(true);
