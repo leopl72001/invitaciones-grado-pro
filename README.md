@@ -100,3 +100,11 @@ En **Personalización → Canciones de 30 segundos** pega un enlace HTTPS que ap
 Los enlaces normales a YouTube, Spotify o Instagram son páginas/plataformas, **no enlaces directos a archivos de audio**, y no se pueden convertir automáticamente en canciones recortadas. Usa música propia o autorizada. Algunas URLs directas protegidas también pueden impedir el acceso al audio.
 
 Si ya creaste las tablas de Supabase con la versión anterior, ejecuta **`supabase/migration_music_clips.sql`** en SQL Editor una sola vez para agregar los tres tiempos de inicio y actualizar la función pública. Si aún no ejecutaste el SQL inicial, utiliza `supabase/schema.sql` actualizado.
+
+## Música mediante enlaces de YouTube
+
+En **Personalización → Canciones de 30 segundos** se aceptan enlaces directos a MP3/M4A/OGG **y enlaces a videos de YouTube** (`youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/shorts/...`).
+
+Para YouTube, selecciona el minuto y el segundo de inicio en el editor, escucha la vista previa desde el reproductor oficial y guarda. La invitación también muestra el video oficial durante ese fragmento de 30 segundos (los parámetros `start` y `end` son segundos absolutos desde el inicio del video). No se descarga, extrae ni modifica audio de YouTube.
+
+Debido a las condiciones de inserción de YouTube, **el reproductor debe estar visible** y el invitado debe tocar Play. No se puede utilizar YouTube como audio invisible de fondo. Algunos videos bloquean la reproducción en otras páginas y pueden mostrar anuncios. Para audio discreto usa un archivo MP3/M4A/OGG propio o autorizado.
