@@ -393,7 +393,7 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
           {usablePhotos.length>3&&<p className="photo-count-hint"><Sparkles size={14}/> {usablePhotos.length} fotografías formando parte de esta historia</p>}
         </section>
         <section className="count-section reveal"><GoldStar/><div className="section-eyebrow">CADA SEGUNDO NOS ACERCA</div><h2>Falta poquito para <em>celebrar</em></h2><Countdown date={settings.event_datetime}/><p>El tiempo corre y la emoción crece. ¡Nos vemos muy pronto!</p></section>
-        <PhotoStory photos={usablePhotos} active={photoIndex}/>
+        <PhotoStory photos={usablePhotos} active={usablePhotos.length>=3?photoIndex+1:Math.min(1,Math.max(0,usablePhotos.length-1))}/>
         <section className="detail-section reveal" id="detalles"><div className="section-eyebrow">GUARDA ESTA FECHA</div><h2>Fecha, hora <em>y lugar</em></h2><div className="detail-cards">
           <div className="detail-card"><div className="detail-icon"><CalendarDays size={25}/></div><span className="small-label">EL GRAN DÍA</span><h3>Viernes 18 de diciembre</h3><p>2026 · 6:00 de la tarde</p><div className="detail-deco">✦ ✦ ✦</div></div>
           <div className="detail-card"><div className="detail-icon"><MapPin size={26}/></div><span className="small-label">NOS ENCONTRAREMOS EN</span><h3>{settings.venue_name}</h3><p>{settings.venue_address}</p>{safeHref(settings.maps_url) ? <a href={safeHref(settings.maps_url)} target="_blank" rel="noreferrer" className="detail-link">Ver ubicación <ExternalLink size={16}/></a> : <span className="detail-link muted-link">Dirección pendiente</span>}</div>
