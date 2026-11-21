@@ -37,6 +37,16 @@ function writeDemo(data: DashboardData) {
 
 function guard(error: { message: string } | null) { if (error) throw new Error(error.message); }
 
+export async function ensureAnonymousSession(): Promise<User | null> {
+  if(!supabase) return null;
+  const existing = await currentUser();
+  if(existing) return existing;
+  const {data,error} = await supabase.auth.signInAnonymously();
+  guard(error);
+  if(!data.user) throw new Error('No se pudo iniciar el acceso automático.');
+  return data.user;
+}
+
 export async function currentUser(): Promise<User | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.auth.getUser();
@@ -55,7 +65,7 @@ export async function signOut() { if (supabase) { const { error } = await supaba
 
 export async function loadDashboard(): Promise<DashboardData> {
   if (!supabase) return copy(readDemo());
-  const user = await currentUser(); if (!user) throw new Error('Inicia sesión para administrar las invitaciones.');
+  const user = await currentUser(); if (!user) throw new Error('No se pudo establecer el acceso automático a Supabase. Activa Anonymous Sign-Ins.');
   const fetched = await supabase.from('events').select('*').eq('owner_id', user.id).order('created_at').limit(1);
   guard(fetched.error);
   let settings = fetched.data?.[0] as EventSettings | undefined;
