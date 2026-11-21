@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   currentUser, getPublicInvitation, hasCloud, invitationUrl, loadDashboard, makeId, makeToken,
-  removeGroup, removeGuest, saveGroup, saveGuest, saveSettings, signIn, signOut, signUp, submitRSVP, supabase, uploadAsset, whatsappUrl
+  removeGroup, removeGuest, saveGroup, saveGuest, saveSettings, ensureAnonymousSession, submitRSVP, supabase, uploadAsset, whatsappUrl
 } from './data';
 import { DEFAULT_EVENT, type DashboardData, type EventSettings, type Guest, type GuestGroup, type PublicInvite, type RSVPStatus, type SongVariant } from './types';
 import { isYouTubeAddress } from './youtube';
@@ -209,17 +209,12 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
   </div>;
 }
 
-function AuthScreen({onSuccess}:{onSuccess:()=>void}) {
-  const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [signup,setSignup]=useState(false);
-  const [busy,setBusy]=useState(false);const [notice,setNotice]=useState('');
-  const submit=async(e:FormEvent)=>{e.preventDefault();setNotice('');setBusy(true);try{if(signup){await signUp(email,password);setNotice('Cuenta creada. Si Supabase solicita confirmar el correo, revisa tu bandeja antes de entrar.');}else{await signIn(email,password);onSuccess();}}catch(err){setNotice((err as Error).message);}finally{setBusy(false);}};
-  return <div className="auth-screen"><div className="auth-content"><div className="auth-graphic"><GraduationCap size={40} strokeWidth={1.2}/><h1>Invitaciones <i>con alma.</i></h1><p>Una celebración merece una experiencia inolvidable.</p><div className="auth-formula">∑ sueños + ∞ esfuerzo = un gran logro</div></div><form className="auth-card" onSubmit={submit}><div className="auth-icon"><ShieldCheck size={25}/></div><h2>{signup?'Crea tu cuenta':'Bienvenido al panel'}</h2><p>{signup?'Guarda tus invitados con seguridad.':'Accede a tus invitados y confirmaciones.'}</p><label>Correo electrónico<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tucorreo@ejemplo.com"/></label><label>Contraseña<input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Mínimo 6 caracteres"/></label>{notice&&<div className="notice">{notice}</div>}<button className="primary" type="submit" disabled={busy}>{busy?'Procesando...':signup?'Crear cuenta':'Entrar al panel'} <ArrowRight size={17}/></button><button className="text-button" type="button" onClick={()=>{setSignup(!signup);setNotice('');}}>{signup?'¿Ya tienes una cuenta? Inicia sesión':'¿Primera vez? Crea tu cuenta'}</button></form></div></div>;
-}
-
 type TabKey = 'overview' | 'guests' | 'groups' | 'responses' | 'settings';
 function Admin() {
   const [userId,setUserId] = useState<string|null>(null);
   const [authLoading,setAuthLoading] = useState(hasCloud);
+  const [authProblem,setAuthProblem] = useState('');
+  const [retryCloud,setRetryCloud] = useState(0);
   const [data,setData] = useState<DashboardData|null>(null);
   const [tab,setTab] = useState<TabKey>('overview');
   const [busy,setBusy] = useState(false);
@@ -236,10 +231,14 @@ function Admin() {
   const [uploading,setUploading] = useState('');
   useEffect(()=>{
     if(!supabase){setAuthLoading(false);return;}
-    void currentUser().then(u=>setUserId(u?.id||null)).finally(()=>setAuthLoading(false));
-    const {data:sub}=supabase.auth.onAuthStateChange((_event,session)=>setUserId(session?.user.id||null));
-    return ()=>sub.subscription.unsubscribe();
-  },[]);
+    let active=true;
+    const {data:sub}=supabase.auth.onAuthStateChange((_event,session)=>{if(active)setUserId(session?.user.id||null);});
+    void ensureAnonymousSession()
+      .then(user=>{if(active){setUserId(user?.id||null);setAuthProblem('');}})
+      .catch(err=>{if(active){setAuthProblem((err as Error).message);setUserId(null);}})
+      .finally(()=>{if(active)setAuthLoading(false);});
+    return ()=>{active=false;sub.subscription.unsubscribe();};
+  },[retryCloud]);
   useEffect(()=>{
     if(!hasCloud || !userId || (tab !== 'responses' && tab !== 'overview')) return;
     const timer=window.setInterval(()=>{
@@ -266,13 +265,23 @@ function Admin() {
     {key:'overview',label:'Inicio',icon:LayoutDashboard},{key:'guests',label:'Invitaciones',icon:Mail},{key:'groups',label:'Grupos',icon:Users},{key:'responses',label:'Confirmaciones',icon:ClipboardCheck},{key:'settings',label:'Personalización',icon:Settings2}
   ];
   if(authLoading)return <div className="full-load admin-loading"><div className="spinner"/>Conectando panel...</div>;
-  if(hasCloud&&!userId)return <AuthScreen onSuccess={()=>void currentUser().then(u=>setUserId(u?.id||null))}/>;
+  if(hasCloud&&!userId)return <div className="auth-screen"><div className="auth-content">
+    <div className="auth-graphic"><GraduationCap size={40}/><h1>Invitaciones <i>con alma.</i></h1><p>Gestiona tu celebración sin crear cuentas ni contraseñas.</p></div>
+    <div className="auth-card"><div className="auth-icon"><ShieldCheck size={25}/></div><h2>Un ajuste para empezar</h2>
+      <p>Para guardar invitados y subir música sin iniciar sesión, activa el acceso anónimo en Supabase: <strong>Authentication → Sign In / Providers → Anonymous Sign-Ins → Enable.</strong></p>
+      {authProblem&&<div className="notice" role="alert">{authProblem}</div>}
+      <button className="primary" type="button" onClick={()=>{setAuthProblem('');setAuthLoading(true);setRetryCloud(n=>n+1);}}>Entrar sin contraseña <ArrowRight size={17}/></button>
+      <a className="text-button" href="https://supabase.com/dashboard" target="_blank" rel="noreferrer">Abrir Supabase</a>
+      <small>Este acceso queda guardado en tu navegador. No borres sus datos ni uses modo incógnito para administrar el evento.</small>
+    </div>
+  </div></div>;
   return <div className="dashboard-shell">
-    <aside className={`sidebar ${mobileMenu?'mobile-visible':''}`}><div className="sidebar-brand"><div className="logo-square"><GraduationCap size={23}/></div><div><strong>GRADO<span>PRO</span></strong><small>STUDIO DE INVITACIONES</small></div></div><p className="side-section-label">MI ESPACIO</p><nav className="sidebar-nav">{menu.map(item=><button key={item.key} onClick={()=>{setTab(item.key);setMobileMenu(false);}} className={tab===item.key?'nav-active':''}><item.icon size={19}/>{item.label}{item.key==='responses'&&confirmed.length>0&&<span className="nav-counter">{confirmed.length}</span>}</button>)}</nav><div className="sidebar-spacer"/><div className="side-help"><Sparkles size={19}/><strong>Tu noche, a tu manera.</strong><p>Crea recuerdos, comparte emociones y celebra sin límites.</p></div><div className="side-footer">{hasCloud?<><ShieldCheck size={16}/> Nube conectada <button onClick={()=>void signOut()} title="Salir"><LogOut size={16}/></button></>:<><CircleHelp size={16}/> Modo demostración</>}</div></aside>
+    <aside className={`sidebar ${mobileMenu?'mobile-visible':''}`}><div className="sidebar-brand"><div className="logo-square"><GraduationCap size={23}/></div><div><strong>GRADO<span>PRO</span></strong><small>STUDIO DE INVITACIONES</small></div></div><p className="side-section-label">MI ESPACIO</p><nav className="sidebar-nav">{menu.map(item=><button key={item.key} onClick={()=>{setTab(item.key);setMobileMenu(false);}} className={tab===item.key?'nav-active':''}><item.icon size={19}/>{item.label}{item.key==='responses'&&confirmed.length>0&&<span className="nav-counter">{confirmed.length}</span>}</button>)}</nav><div className="sidebar-spacer"/><div className="side-help"><Sparkles size={19}/><strong>Tu noche, a tu manera.</strong><p>Crea recuerdos, comparte emociones y celebra sin límites.</p></div><div className="side-footer">{hasCloud?<><ShieldCheck size={16}/> Nube conectada · sin contraseña</>:<><CircleHelp size={16}/> Modo demostración</>}</div></aside>
     {mobileMenu&&<div className="mobile-overlay" onClick={()=>setMobileMenu(false)}/>}
     <div className="main-panel"><header className="admin-topbar"><div className="topbar-left"><button className="mobile-nav-btn" onClick={()=>setMobileMenu(true)} aria-label="Abrir menú"><Menu size={22}/></button><span className="topbar-breadcrumb">GRADOPRO</span><span className="slash">/</span><span>{menu.find(item=>item.key===tab)?.label}</span></div><div className="topbar-right"><span className={`connection-dot ${hasCloud?'connected':''}`}/><span className="connection-label">{hasCloud?'Sincronizado':'Solo este dispositivo'}</span><div className="profile-circle">{initials(data?.settings.graduate_name||'Graduación')}</div></div></header>
     <div className="admin-content">
       {notice&&<div className="toast-message"><Sparkles size={16}/>{notice}<button onClick={()=>setNotice('')}><X size={15}/></button></div>}
+      {hasCloud&&<div className="demo-banner"><div><ShieldCheck size={18}/><span><strong>Acceso sin contraseña:</strong> este navegador conserva tu sesión de edición. No borres los datos del navegador si deseas seguir administrando las invitaciones. Los invitados sí podrán responder desde otros celulares.</span></div></div>}
       {!hasCloud&&<div className="demo-banner"><div><ShieldCheck size={18}/><span><strong>Modo demostración:</strong> los cambios se guardan en este navegador. Para que los enlaces funcionen en otros celulares y las confirmaciones lleguen al panel, conecta Supabase y publica la web.</span></div><a href="https://supabase.com" target="_blank" rel="noreferrer">Conectar nube <ArrowRight size={14}/></a></div>}
       {!data ? <div className="empty-state"><span className="spinner"/> {busy?'Cargando tus invitaciones...':'No pudimos cargar los datos. Revisa la configuración de Supabase.'}<button onClick={()=>void refresh()}>Reintentar</button></div> : <>
       {tab==='overview'&&<>
