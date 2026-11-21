@@ -42,6 +42,12 @@ jobs:
             process.exit(1);
           }
           console.log('CSS verificado:', cssUrl, fs.statSync(cssPath).size, 'bytes');
+          const preview = 'dist/invitacion-whatsapp.png';
+          if (!fs.existsSync(preview) || fs.statSync(preview).size < 10000) {
+            console.error('ERROR: falta la imagen de vista previa para WhatsApp.');
+            process.exit(1);
+          }
+          console.log('Vista previa de WhatsApp verificada:', fs.statSync(preview).size, 'bytes');
           NODE
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

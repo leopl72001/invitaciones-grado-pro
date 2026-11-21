@@ -152,11 +152,13 @@ export async function uploadAsset(file: File, section: string, userId: string): 
 }
 
 export function invitationUrl(token: string) {
-  return `${window.location.href.split('#')[0]}#/i/${token}`;
+  // URL canónica y única por invitado: evita copiar parámetros de pruebas (?v=...).
+  // El token en el fragmento mantiene el nombre/cupos privados para la invitación.
+  return `${window.location.origin}${import.meta.env.BASE_URL}#/i/${token}`;
 }
 export function whatsappUrl(guest: Guest, settings: EventSettings) {
   const invite = invitationUrl(guest.share_token);
-  const msg = `✨ ${guest.name}, estás invitado/a a celebrar mi graduación en ${settings.degree}. 🎓\n\nTu invitación personalizada (${guest.seats} ${guest.seats === 1 ? 'cupo' : 'cupos'}):\n${invite}\n\n¡Será una noche muy especial!`;
+  const msg = `🎓 ¡Tienes una invitación, ${guest.name}!\n\nMe encantaría contar contigo para celebrar mi graduación en ${settings.degree}.\n\nTu invitación es personal y tiene ${guest.seats} ${guest.seats === 1 ? 'cupo' : 'cupos'}.\n\n✨ Abre este enlace para ver todos los detalles y confirmar tu asistencia:\n${invite}`;
   const phone = guest.phone.replace(/[^\d]/g, '');
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 }
