@@ -104,3 +104,6 @@ Los datos de ejemplo “Familia de ejemplo” e “Invitado especial” sirven p
 - Las canciones deben ser propias o contar con los permisos de uso correspondientes. El botón **Subir MP3** funciona después de configurar Supabase Storage.
 
 > Antes de compartir enlaces reales hay que configurar Supabase. El modo demostración sigue almacenando los invitados y cambios solo en el navegador donde se editaron.
+## Activación de la conexión Supabase en GitHub Pages
+
+El workflow de GitHub Pages lee las variables de repositorio `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` durante `npm run build`. Después de configurarlas, un nuevo commit en `main` genera una compilación que incorpora los valores públicos y habilita el acceso a Supabase. Para subir canciones desde la interfaz, primero hay que iniciar sesión en GradoPro con una cuenta de Supabase Auth y haber ejecutado `supabase/schema.sql` en SQL Editor.
