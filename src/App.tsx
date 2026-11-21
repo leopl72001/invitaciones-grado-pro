@@ -205,8 +205,9 @@ function CinematicIntro({
           </span>
           <span className="ci-envelope-flap"/>
           <span className="ci-envelope-pocket"/>
-          <span className="ci-envelope-seal">ℳ</span>
         </span>
+        {/* El sello es hermano del sobre, no hijo: ninguna solapa puede taparlo. */}
+        <span className="ci-envelope-seal ci-front-seal" aria-hidden="true">ℳ</span>
       </button>
       <span className="ci-stage-shadow" aria-hidden="true"/>
     </div>
