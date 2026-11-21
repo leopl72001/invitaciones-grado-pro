@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="49%" r="80%"><stop stop-color="#23395f"/><stop offset=".5" stop-color="#0e1c38"/><stop offset="1" stop-color="#080f24"/></radialGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2d1"/><stop offset=".4" stop-color="#d7aa66"/><stop offset="1" stop-color="#ac7845"/></linearGradient>
+  <linearGradient id="envelope" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f2dab2"/><stop offset=".5" stop-color="#e2bf89"/><stop offset="1" stop-color="#aa7f4d"/></linearGradient>
+  <linearGradient id="front" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f7e4c0"/><stop offset="1" stop-color="#c29a65"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="25"/></filter>
+  <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="17" stdDeviation="15" flood-color="#040a15" flood-opacity=".65"/></filter>
+</defs>
+<rect width="1200" height="630" fill="url(#bg)"/>
+<ellipse cx="603" cy="460" rx="315" ry="145" fill="#d0a969" opacity=".18" filter="url(#glow)"/>
+<circle cx="600" cy="365" r="310" fill="none" stroke="#d8b578" opacity=".20"/>
+<circle cx="600" cy="365" r="265" fill="none" stroke="#c9ab78" opacity=".1"/>
+<rect x="17" y="17" width="1166" height="596" fill="none" stroke="#e6cb8a" stroke-opacity=".24" stroke-width="1.2"/>
+<g fill="#d7b376" opacity=".52" font-family="Georgia,serif" font-style="italic">
+  <text x="80" y="130" font-size="42">∫ f(x) dx</text><text x="1060" y="110" font-size="44" text-anchor="middle">π</text>
+  <text x="95" y="362" font-size="62">Σ</text><text x="1085" y="343" font-size="52">∞</text>
+  <text x="94" y="525" font-size="42">√</text><text x="1092" y="515" font-size="40">x²</text>
+</g>
+<g fill="#f5d998"><circle cx="174" cy="199" r="3"/><circle cx="1110" cy="206" r="2"/><circle cx="140" cy="471" r="2"/><circle cx="1050" cy="474" r="2"/><circle cx="354" cy="126" r="2"/><circle cx="856" cy="138" r="2"/></g>
+<g stroke="#e7c381" stroke-width="2.2" stroke-linecap="round" opacity=".85">
+<path d="M181 90v17 M172 98h18 M1026 406v19 M1017 415h18 M341 537v15 M334 545h15 M916 97v16 M909 105h15"/>
+</g>
+<!-- Academic cap -->
+<path d="M546 70 L600 48 L654 70 L600 93Z" fill="url(#gold)"/>
+<path d="M565 82v20c23 14 47 14 70 0V82" fill="#e3be7d" stroke="#efd6a9" stroke-width="2"/>
+<path d="M653 71v31" fill="none" stroke="#e7c185" stroke-width="3"/><circle cx="653" cy="106" r="5" fill="#edca8d"/>
+<text x="600" y="144" font-family="Georgia,serif" text-anchor="middle" font-size="20" letter-spacing="6" fill="#f0daac">GRADUACIÓN</text>
+<text x="600" y="173" font-family="Georgia,serif" text-anchor="middle" font-size="15" letter-spacing="3.2" fill="#d9c6a7">LICENCIATURA EN MATEMÁTICAS</text>
+<line x1="300" y1="205" x2="900" y2="205" stroke="#bd9661" stroke-opacity=".55"/>
+<text x="600" y="279" font-family="Georgia,'Times New Roman',serif" text-anchor="middle" font-size="74" fill="#fff2df">Tienes una invitación</text>
+<text x="600" y="326" font-family="Georgia,'Times New Roman',serif" text-anchor="middle" font-style="italic" font-size="25" fill="#e5c58f">Ábrela para descubrir todos los detalles</text>
+<!-- Envelope -->
+<g filter="url(#shadow)">
+  <path d="M428 400 L600 352 L772 400 L772 557 L428 557 Z" fill="#c59d6c"/>
+  <rect x="473" y="355" width="256" height="180" rx="4" fill="#fdf0da" transform="rotate(-2 600 445)" stroke="#b59161" stroke-width="3"/>
+  <rect x="487" y="368" width="226" height="152" rx="2" fill="none" stroke="#d3b37f"/>
+  <text x="600" y="442" font-family="Georgia,serif" text-anchor="middle" font-size="68" font-style="italic" fill="#bc8e56">π</text>
+  <path d="M429 402L600 484L771 402L771 557L429 557Z" fill="url(#envelope)"/>
+  <path d="M429 556L574 453L600 474L626 453L771 556Z" fill="url(#front)" stroke="#f6e0b6" stroke-width="1"/>
+  <circle cx="600" cy="497" r="31" fill="url(#gold)" stroke="#7d542b" stroke-width="4"/>
+  <circle cx="600" cy="497" r="25" fill="none" stroke="#fff0cc" stroke-width="1.5"/>
+  <text x="600" y="508" font-family="Georgia,serif" font-style="italic" font-size="30" fill="#7b4b2b" text-anchor="middle">M</text>
+</g>
+<path d="M134 572 C261 531 293 541 392 573" fill="none" stroke="#cb9d57" stroke-width="5" opacity=".62"/>
+<path d="M808 573 C901 537 940 539 1064 571" fill="none" stroke="#cb9d57" stroke-width="5" opacity=".62"/>
+</svg>
