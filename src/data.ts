@@ -154,7 +154,7 @@ export async function uploadAsset(file: File, section: string, userId: string): 
 export function invitationUrl(token: string) {
   // URL canónica y única por invitado: evita copiar parámetros de pruebas (?v=...).
   // El token en el fragmento mantiene el nombre/cupos privados para la invitación.
-  return `${window.location.origin}${import.meta.env.BASE_URL}#/i/${token}`;
+  return `${window.location.origin}${import.meta.env.BASE_URL}#/invitacion/${token}`;
 }
 export function whatsappUrl(guest: Guest, settings: EventSettings) {
   const invite = invitationUrl(guest.share_token);
