@@ -79,7 +79,7 @@ function Countdown({date}:{date:string}) {
 
 function GraduatesPhoto({src,index}:{src:string;index:number}) {
   return <div className={`polaroid polaroid-${index + 1}`}>
-    {safeHref(src) ? <img alt={`Recuerdo de graduación ${index+1}`} src={safeHref(src)} loading="lazy"/> : <div className="polaroid-placeholder"><GraduationCap size={index===1?65:50} strokeWidth={1.1}/><span>Mi gran logro</span></div>}
+    {safeHref(src) ? <img key={src} alt={`Recuerdo de graduación ${index+1}`} src={safeHref(src)} loading="lazy"/> : <div className="polaroid-placeholder"><GraduationCap size={index===1?65:50} strokeWidth={1.1}/><span>Mi gran logro</span></div>}
     <span className="polaroid-caption">{['Un sueño','Un logro','Un nuevo comienzo'][index]}</span>
   </div>;
 }
@@ -113,7 +113,7 @@ function PhotoStory({photos,active}:{photos:string[];active:number}) {
   </section>;
 }
 function Filmstrip({photos}:{photos:string[]}) {
-  if(!photos.length)return null;
+  if(photos.length<2)return null;
   const repeated=[...photos,...photos,...photos];
   return <section className="filmstrip-section reveal">
     <div className="section-eyebrow">INSTANTÁNEAS DE UN SUEÑO</div>
@@ -260,7 +260,7 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
         </section>
         <section className="photo-section reveal"><div className="section-eyebrow">CADA SUEÑO TIENE SU HISTORIA</div><h2>La fórmula de <em>un sueño cumplido</em></h2>
           <p className="section-lead">Entre desafíos, números y nuevas oportunidades, cada paso valió la pena. Hoy celebramos todo lo aprendido y lo que está por venir.</p>
-          <div className="polaroid-row">{[0,1,2].map(i=><GraduatesPhoto key={i} src={usablePhotos.length ? usablePhotos[(photoIndex+i)%usablePhotos.length] : ''} index={i}/>)}</div>
+          <div className="polaroid-row">{[0,1,2].map(i=><GraduatesPhoto key={i} src={usablePhotos.length>=3 ? usablePhotos[(photoIndex+i)%usablePhotos.length] : (usablePhotos[i]||'')} index={i}/>)}</div>
           {usablePhotos.length>3&&<p className="photo-count-hint"><Sparkles size={14}/> {usablePhotos.length} fotografías formando parte de esta historia</p>}
         </section>
         <section className="count-section reveal"><GoldStar/><div className="section-eyebrow">CADA SEGUNDO NOS ACERCA</div><h2>Falta poquito para <em>celebrar</em></h2><Countdown date={settings.event_datetime}/><p>El tiempo corre y la emoción crece. ¡Nos vemos muy pronto!</p></section>
