@@ -115,3 +115,8 @@ Si se desea solo música con un reproductor discreto, se debe usar un archivo MP
 En **Personalización → Canciones**, hay dos pares de campos **Inicio** y **Fin** (minutos y segundos), más una barra visual con **dos marcadores dorados** para arrastrar cada extremo. Por ejemplo, puedes seleccionar **1:15 → 1:45 (0:30)** o **2:23 → 2:40 (0:17)**. La aplicación limita el fragmento a un máximo de **30 segundos** y aplica exactamente ese intervalo también en la invitación pública. YouTube se reproduce en un video integrado visible y puede requerir pulsar Play.
 
 **Supabase:** el archivo `supabase/schema.sql` ya incluye `music_*_end` para proyectos nuevos. Si ya se creó la base de datos, **vuelve a ejecutar `supabase/migration_music_clips.sql`** en SQL Editor; es repetible e incorpora los campos de fin y el resultado público de la invitación. En modo demostración no requiere esta migración.
+
+
+### Arrastrar inicio y final como dos controles separados
+
+El selector de recortes ahora contiene una barra combinada con **dos extremos dorados realmente arrastrables** (con mouse o dedo) y, debajo, **dos deslizadores individuales** de inicio y fin similares al ejemplo del usuario. También es posible arrastrar la franja dorada completa para mover el fragmento. Cuando se desplaza un extremo más allá del otro, se mueve el intervalo completo para no superar 30 segundos. Los campos de minutos y segundos siguen disponibles. Los controles permiten ajustarse con teclado.
