@@ -132,7 +132,7 @@ function Confetti({active}:{active:boolean}) {
 
 
 
-type IntroPhase = 'idle' | 'opening' | 'revealing' | 'zooming' | 'done';
+type IntroPhase = 'idle' | 'unsealing' | 'opening' | 'revealing' | 'zooming' | 'done';
 
 function CinematicIntro({
   guest,settings,phase,onOpen,unsupportedMusic
@@ -144,6 +144,14 @@ function CinematicIntro({
   unsupportedMusic:boolean;
 }) {
   const animating = phase!=='idle';
+  const phaseText:Record<IntroPhase,string> = {
+    idle:'Toca el sobre para descubrir tu invitación',
+    unsealing:'El sello se rompe…',
+    opening:'El sobre se está abriendo…',
+    revealing:'Tu carta está saliendo…',
+    zooming:'Descubre esta noche especial…',
+    done:'¡Bienvenido!'
+  };
   return <div className={`ci-screen ci-${phase}`}>
     <div className="ci-spotlights" aria-hidden="true"/>
     <div className="ci-ambient-particles" aria-hidden="true">
@@ -197,6 +205,7 @@ function CinematicIntro({
         {animating ? 'Descubriendo tu invitación...' : 'Abrir mi invitación'}
         <Sparkles size={18}/>
       </button>
+      <p className="ci-phase-caption" aria-live="polite">{phaseText[phase]}</p>
       <div className="ci-date">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
       {unsupportedMusic && <p className="ci-audio-warning" role="status">Para escuchar la música de fondo, configura un archivo MP3 en Personalización.</p>}
     </div>
@@ -303,10 +312,12 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
       finish();
       return;
     }
-    setIntroPhase('opening');
-    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('revealing'),1400));
-    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('zooming'),3100));
-    introTimersRef.current.push(window.setTimeout(finish,4700));
+    // La tapa tiene una fase propia; no se oculta detrás del bolsillo.
+    setIntroPhase('unsealing');
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('opening'),650));
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('revealing'),2300));
+    introTimersRef.current.push(window.setTimeout(()=>setIntroPhase('zooming'),4100));
+    introTimersRef.current.push(window.setTimeout(finish,5750));
   };
   const save = async (e:FormEvent) => {
     e.preventDefault();setError('');setSaving(true);
