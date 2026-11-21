@@ -312,6 +312,7 @@ function Admin() {
   const [settingsDraft,setSettingsDraft] = useState<EventSettings|null>(null);
   const [savingSettings,setSavingSettings] = useState(false);
   const [uploading,setUploading] = useState('');
+  const bulkPhotosRef=useRef<HTMLInputElement|null>(null);
   useEffect(()=>{
     if(!supabase){setAuthLoading(false);return;}
     let active=true;
@@ -381,7 +382,23 @@ function Admin() {
       {tab==='settings'&&settingsDraft&&<><AdminHeading eyebrow="DISEÑA UNA EXPERIENCIA ÚNICA" title="Personaliza tu evento" detail="Estos detalles se reflejarán automáticamente en todas las invitaciones." action={<button className="primary" disabled={savingSettings} onClick={()=>void mutateSettings()}><Check size={18}/>{savingSettings?'Guardando...':'Guardar cambios'}</button>}/><div className="settings-layout"><div className="settings-main"><div className="admin-card settings-card"><div className="card-header"><div><h3><GraduationCap size={20}/> Datos de la graduación</h3><p>La información principal que verán tus invitados.</p></div></div><div className="form-grid"><Field label="Nombre del graduando" value={settingsDraft.graduate_name} onChange={v=>updateSettings('graduate_name',v)}/><Field label="Título o carrera" value={settingsDraft.degree} onChange={v=>updateSettings('degree',v)}/><Field label="Frase de portada" value={settingsDraft.headline} onChange={v=>updateSettings('headline',v)}/><Field label="Fecha y hora (Colombia)" type="datetime-local" value={dateForInput(settingsDraft.event_datetime)} onChange={v=>updateSettings('event_datetime',`${v}:00-05:00`)}/><Field label="Nombre del lugar" value={settingsDraft.venue_name} onChange={v=>updateSettings('venue_name',v)}/><Field label="Dirección completa" value={settingsDraft.venue_address} onChange={v=>updateSettings('venue_address',v)}/><Field label="Enlace de Google Maps" value={settingsDraft.maps_url} onChange={v=>updateSettings('maps_url',v)} placeholder="https://maps.google.com/..."/><Field label="Fecha límite de confirmación" type="date" value={settingsDraft.rsvp_deadline} onChange={v=>updateSettings('rsvp_deadline',v)}/></div><label className="block-label">Mensaje de bienvenida<textarea value={settingsDraft.intro} rows={3} onChange={e=>updateSettings('intro',e.target.value)}/></label><label className="block-label">Mensaje final<textarea value={settingsDraft.closing_message} rows={2} onChange={e=>updateSettings('closing_message',e.target.value)}/></label></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Music2 size={20}/> Música de las invitaciones</h3><p>Configura un archivo de audio directo para que suene al abrir el sobre, sin video ni otro botón Play.</p></div></div><div className="asset-stack">{([{key:'music_default_url',startKey:'music_default_start',endKey:'music_default_end',label:'Canción principal · todos los invitados',section:'music-main'},{key:'music_special_1_url',startKey:'music_special_1_start',endKey:'music_special_1_end',label:'Canción diferente · invitado especial 1',section:'music-special-1'},{key:'music_special_2_url',startKey:'music_special_2_start',endKey:'music_special_2_end',label:'Canción diferente · invitado especial 2',section:'music-special-2'}] as const).map(item=><MusicLinkField key={item.key} label={item.label} value={settingsDraft[item.key]} onValue={v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev)} onUpload={f=>handleUpload(f,item.section,v=>setSettingsDraft(prev=>prev?{...prev,[item.key]:v,[item.startKey]:0,[item.endKey]:30}:prev))} uploading={uploading===item.section}/>)}</div><p className="form-help"><Volume2 size={16}/> Al abrir el sobre se repetirá el fragmento de 30 segundos de forma continua, hasta que pauses la música o cierres la invitación. Usa un enlace directo a MP3, M4A, OGG o WAV. Los enlaces de YouTube no permiten música invisible sin el video; reemplázalos para activar este modo.</p></div>
         <div className="admin-card settings-card"><div className="card-header"><div><h3><Gift size={20}/> Ideas de regalos</h3><p>Puedes mostrar las dos opciones a todos los invitados.</p></div></div><label className="block-label">Opción 1 · Lluvia de sobres<textarea value={settingsDraft.gift_cash_text} rows={3} onChange={e=>updateSettings('gift_cash_text',e.target.value)}/></label><label className="block-label">Opción 2 · Regalo especial<textarea value={settingsDraft.gift_ideas_text} rows={3} onChange={e=>updateSettings('gift_ideas_text',e.target.value)}/></label></div>
-        <div className="admin-card settings-card"><div className="card-header"><div><h3><Sparkles size={20}/> Galería de recuerdos</h3><p>Agrega hasta tres fotografías del graduando.</p></div></div><div className="asset-stack">{[0,1,2].map(i=><AssetField key={i} label={`Fotografía ${i+1}`} type="image" value={settingsDraft.photo_urls[i]||''} onValue={v=>updateSettings('photo_urls',[...settingsDraft.photo_urls.slice(0,i),v,...settingsDraft.photo_urls.slice(i+1)])} onUpload={f=>handleUpload(f,`photo-${i}`,v=>updateSettings('photo_urls',[...settingsDraft.photo_urls.slice(0,i),v,...settingsDraft.photo_urls.slice(i+1)]))} uploading={uploading===`photo-${i}`}/>)}</div></div>
+        <div className="admin-card settings-card"><div className="card-header"><div><h3><Sparkles size={20}/> Galería cinematográfica</h3><p>Agrega hasta 12 fotos para distribuirlas por toda la invitación, con efectos de movimiento.</p></div></div>
+          <div className="gallery-tools">
+            <span className="gallery-total">{settingsDraft.photo_urls.filter(Boolean).length} / 12 fotografías</span>
+            <input ref={bulkPhotosRef} hidden type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={e=>{void uploadManyPhotos(e.target.files);e.target.value='';}}/>
+            <button className="outline-button" disabled={Boolean(uploading)||settingsDraft.photo_urls.filter(Boolean).length>=12} onClick={()=>bulkPhotosRef.current?.click()} type="button"><Plus size={16}/>{uploading==='photos-batch'?'Subiendo fotos...':'Subir varias fotos'}</button>
+            <button className="outline-button" type="button" disabled={settingsDraft.photo_urls.length>=12} onClick={()=>setSettingsDraft(prev=>prev?{...prev,photo_urls:[...prev.photo_urls,'']}:prev)}><Plus size={16}/> Añadir espacio</button>
+          </div>
+          <p className="gallery-help">Puedes seleccionar varias imágenes de tu computador o pegar un enlace directo en cada campo. Pulsa Guardar cambios al terminar.</p>
+          <div className="gallery-photo-editor">{settingsDraft.photo_urls.map((url,i)=><div className="gallery-photo-item" key={i}>
+              <AssetField label={`Fotografía ${i+1}`} type="image" value={url} onValue={v=>changePhoto(i,v)} onUpload={f=>handleUpload(f,`photo-${i}`,v=>changePhoto(i,v))} uploading={uploading===`photo-${i}`}/>
+              <div className="gallery-photo-actions">
+                <button type="button" disabled={i===0} onClick={()=>movePhoto(i,-1)}>↑ Subir posición</button>
+                <button type="button" disabled={i===settingsDraft.photo_urls.length-1} onClick={()=>movePhoto(i,1)}>↓ Bajar posición</button>
+                <button type="button" onClick={()=>removePhoto(i)}><Trash2 size={14}/> Quitar foto</button>
+              </div>
+            </div>)}</div>
+          </div>
       </div><div className="settings-side"><div className="admin-card live-preview-card"><div className="section-eyebrow">VISTA PREVIA</div><div className="preview-mini"><GraduationCap size={36}/><p className="script">El gran día</p><h3>{settingsDraft.graduate_name||'Mi graduación'}</h3><span>{settingsDraft.degree}</span><div>✦ 18 · 12 · 2026 ✦</div></div><p>Así se verá la portada de las invitaciones.</p><button className="outline-button" onClick={()=>{if(data.guests.length)window.open(invitationUrl(data.guests[0].share_token),'_blank');else tell('Primero crea una invitación para abrir su vista previa.');}}>Abrir invitación de prueba <ExternalLink size={16}/></button></div><div className="admin-card tips-card"><ShieldCheck size={22}/><h4>Tu información está protegida</h4><p>{!localMode?'Los nombres y teléfonos se guardan en Supabase y están separados de otros usuarios mediante permisos de sesión.':'Estás usando el modo local: tus datos solo están en este navegador. No envíes invitaciones todavía.'}</p></div></div></div></>}
       </>}
     </div></div>
@@ -389,6 +406,39 @@ function Admin() {
     {showGroupDialog&&groupEditing&&<GroupDialog initial={groupEditing} onClose={()=>setShowGroupDialog(false)} onSave={async g=>{await mutate(()=>saveGroup(g),'Grupo guardado correctamente.');setShowGroupDialog(false);}}/>}
   </div>;
   function updateSettings<K extends keyof EventSettings>(key:K,value:EventSettings[K]) {setSettingsDraft(prev=>prev?{...prev,[key]:value}:prev);}
+  function changePhoto(index:number,url:string){
+    setSettingsDraft(prev=>{if(!prev)return prev;const list=[...prev.photo_urls];list[index]=url;return {...prev,photo_urls:list.slice(0,12)};});
+  }
+  function removePhoto(index:number){
+    setSettingsDraft(prev=>prev?{...prev,photo_urls:prev.photo_urls.filter((_,i)=>i!==index)}:prev);
+  }
+  function movePhoto(index:number,offset:number){
+    setSettingsDraft(prev=>{
+      if(!prev)return prev;
+      const list=[...prev.photo_urls];const to=index+offset;
+      if(to<0||to>=list.length)return prev;
+      [list[index],list[to]]=[list[to],list[index]];
+      return {...prev,photo_urls:list};
+    });
+  }
+  async function uploadManyPhotos(files:FileList|null){
+    if(!files?.length)return;
+    if(localMode||!userId){tell('Para subir fotos desde el panel debes activar Anonymous Sign-Ins en Supabase. Mientras tanto puedes pegar enlaces directos a las fotografías.');return;}
+    const remaining=12-(settingsDraft?.photo_urls.filter(Boolean).length||0);
+    if(remaining<=0){tell('La galería admite un máximo de 12 fotografías.');return;}
+    setUploading('photos-batch');
+    const urls:string[]=[];
+    try{
+      for(const file of Array.from(files).slice(0,remaining)){
+        try {urls.push(await uploadAsset(file,'photos',userId));}
+        catch(err){tell(`No se pudo subir ${file.name}: ${(err as Error).message}`);}
+      }
+      if(urls.length){
+        setSettingsDraft(prev=>prev?{...prev,photo_urls:[...prev.photo_urls.filter(Boolean),...urls].slice(0,12)}:prev);
+        tell(`${urls.length} fotos subidas. Pulsa Guardar cambios para publicarlas.`);
+      }
+    }finally{setUploading('');}
+  }
   async function mutateSettings(){if(!settingsDraft)return;setSavingSettings(true);try{await saveSettings(settingsDraft);await refresh();tell([settingsDraft.music_default_url,settingsDraft.music_special_1_url,settingsDraft.music_special_2_url].some(isYouTubeAddress) ? 'Cambios guardados. Atención: reemplaza los enlaces de YouTube por MP3 directos para que la música suene al abrir el sobre.' : '¡Evento actualizado! Los cambios ya se reflejan en las invitaciones.');}catch(e){tell(`Error: ${(e as Error).message}`);}finally{setSavingSettings(false);}}
   async function handleUpload(file:File,section:string,done:(url:string)=>void){setUploading(section);try{if(localMode||!userId)throw new Error('Para subir fotos o canciones desde el panel necesitas habilitar Anonymous Sign-Ins en Supabase. Mientras tanto puedes usar enlaces públicos directos.');const result=await uploadAsset(file,section,userId);done(result);tell('Archivo subido. Ahora pulsa Guardar cambios para publicarlo.');}catch(e){tell((e as Error).message);}finally{setUploading('');}}
 }
