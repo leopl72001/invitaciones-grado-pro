@@ -26,23 +26,23 @@ export function isYouTubeAddress(link: string): boolean {
 }
 
 /** El parámetro end es absoluto desde el inicio del video, NO relativo a start. */
-export function youtubeClipUrl(id: string, clipStart: number, clipEnd?: number): string {
+export function youtubeClipUrl(id: string, clipStart: number, clipEnd?: number, autoPlay = false): string {
   const start = Math.max(0, Math.floor(Number(clipStart) || 0));
   const end = Math.min(start + 30, Math.max(start + 1, Math.floor(Number(clipEnd) || start + 30)));
-  const params = new URLSearchParams({ start: String(start), end: String(end), playsinline: '1', rel: '0', controls: '1' });
+  const params = new URLSearchParams({ start: String(start), end: String(end), playsinline: '1', rel: '0', controls: '1', autoplay: autoPlay ? '1' : '0' });
   return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
 }
 
-export function YouTubeClipEmbed({ id, start, end, title, style }: { id: string; start: number; end?: number; title: string; style?: CSSProperties }) {
+export function YouTubeClipEmbed({ id, start, end, title, style, autoPlay = false }: { id: string; start: number; end?: number; title: string; style?: CSSProperties; autoPlay?: boolean }) {
   return <div className="youtube-video-frame" style={style}>
     <iframe
       key={`${id}-${Math.floor(start)}-${Math.floor(end ?? (start + 30))}`}
       title={title}
-      src={youtubeClipUrl(id, start, end)}
-      allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+      src={youtubeClipUrl(id, start, end, autoPlay)}
+      allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; web-share"
       referrerPolicy="strict-origin-when-cross-origin"
       allowFullScreen
-      loading="lazy"
+      loading={autoPlay ? "eager" : "lazy"}
     />
   </div>;
 }

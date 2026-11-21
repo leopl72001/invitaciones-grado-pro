@@ -8,7 +8,7 @@ Aplicación React + TypeScript + Vite para la fiesta de **Licenciatura en Matem�
 - Panel administrativo para **crear, editar, eliminar y filtrar invitados**, cada uno con **nombre, grupo, cupos, teléfono y enlace exclusivo**.
 - Catálogo de invitaciones y botones **Copiar enlace**, **Vista previa** y **Enviar por WhatsApp**.
 - Grupos de invitados (familia, amigos, etc.) y cupos sugeridos por grupo.
-- Selector musical estilo Instagram: pega una URL directa de audio, escucha la vista previa y mueve el inicio de la ventana de **30 segundos**; los enlaces a páginas de YouTube/Spotify no entregan un archivo de audio utilizable.
+- Música simplificada: pega enlaces directos de MP3 o enlaces de videos de YouTube; eliminamos la tijera y la línea de tiempo del panel. Se intenta iniciar al entrar y al abrir el sobre, según lo permita el navegador.
 - Tres canciones configurables: una general y **dos canciones especiales** que se asignan a dos invitaciones específicas. El sistema impide usar cada canción especial en más de una invitación.
 - Formulario de **confirmación de asistencia** con validación de cupos, mensaje y opción de modificar la respuesta.
 - Registro de respuestas (el panel actualiza cada 12 segundos), cantidad de asistentes y exportación CSV; ideas de regalos en dos categorías.
@@ -42,14 +42,14 @@ Abre `http://localhost:5173`.
    ```
 
 6. Reinicia `npm run dev`, crea una cuenta desde el panel e inicia sesión. La primera vez se creará tu evento.
-7. En **Personalización**, agrega nombre, dirección, Google Maps, fotos y 3 clips musicales. Pulsa **Guardar cambios**.
+7. En **Personalización**, agrega nombre, dirección, Google Maps, fotos y el enlace de la canción principal; puedes añadir también dos canciones especiales. Pulsa **Guardar cambios**.
 8. Crea grupos, registra invitados, establece cupos y asigna la canción especial solo a las 2 invitaciones que quieras.
 
 ### Sobre fotos y música
 
 Se pueden pegar URLs públicas HTTPS o subir archivos al bucket `invitation-assets` con el botón **Subir** (requiere iniciar sesión en Supabase). Las fotografías y los clips subidos serán **públicos para quien conozca su URL**, no incluyas archivos privados. Para los audios usa material propio o autorizado; la app limita la reproducción a 30 segundos, pero eso no sustituye los permisos de uso.
 
-Los navegadores móviles normalmente **no permiten reproducir audio automáticamente**. La invitación ofrece un botón Play; el sonido empieza cuando el invitado lo toca.
+Los navegadores **no siempre permiten reproducir audio automáticamente con sonido**. Con archivos MP3 públicos la app lo intenta al entrar y vuelve a intentarlo cuando el invitado toca **Abrir mi invitación**. Con YouTube se muestra el reproductor oficial (no se extrae audio), se intenta la reproducción al abrir el sobre y quizá haya que tocar Play en el propio video.
 
 ## Publicar en GitHub Pages
 
@@ -93,30 +93,14 @@ Los navegadores móviles normalmente **no permiten reproducir audio automáticam
 
 Los datos de ejemplo “Familia de ejemplo” e “Invitado especial” sirven para probar el catálogo. Puedes editarlos o eliminarlos.
 
-## Selector de fragmentos musicales (nueva función)
 
-En **Personalización → Canciones de 30 segundos** pega un enlace HTTPS que apunte a un archivo reproducible (MP3, M4A, OGG, WAV) o utiliza **Subir** (requiere Supabase). La duración se detecta en el navegador, aparece una línea de tiempo visual y puedes seleccionar el punto de inicio y pulsar **Escuchar recorte**. Después, pulsa **Guardar cambios**. La invitación comienza en ese segundo y detiene el audio pasados 30 segundos. El archivo no se corta físicamente: se configura el intervalo de reproducción, por lo que no consume almacenamiento extra.
+## Música simplificada y reproducción al abrir
 
-Los enlaces normales a YouTube, Spotify o Instagram son páginas/plataformas, **no enlaces directos a archivos de audio**, y no se pueden convertir automáticamente en canciones recortadas. Usa música propia o autorizada. Algunas URLs directas protegidas también pueden impedir el acceso al audio.
+- **Personalización → Música de las invitaciones:** solo se pega el enlace de YouTube o audio MP3. Ya no hay editor de tijera, dos cursores ni selección manual de inicio/final.
+- La **canción principal** corresponde a todos los invitados, salvo las dos invitaciones marcadas como **Especial 1** o **Especial 2**. La asignación se hace al crear/editar la invitación individual. Si una pista especial está vacía, se utiliza la principal.
+- Al entrar a la invitación se intenta reproducir el audio si es un archivo directamente reproducible. Al tocar el sobre o **Abrir mi invitación** se hace otro intento bajo el gesto del usuario. El audio se detiene tras **30 segundos** y se puede pausar desde el icono de música.
+- Para **YouTube**, el navegador puede bloquear el autoplay con sonido y los videos pueden prohibir la inserción. El reproductor oficial debe permanecer visible; se muestra como tarjeta de video, se intenta reproducir al abrir el sobre y el invitado puede pulsar Play en el propio video si la reproducción automática no se permite. No se oculta ni se descarga audio de YouTube.
+- Al pegar otro enlace nuevo, la selección anterior se restablece a los primeros 30 segundos. El resto de ajustes, los grupos y las confirmaciones no se modifican.
+- Las canciones deben ser propias o contar con los permisos de uso correspondientes. El botón **Subir MP3** funciona después de configurar Supabase Storage.
 
-Si ya creaste las tablas de Supabase con la versión anterior, ejecuta **`supabase/migration_music_clips.sql`** en SQL Editor una sola vez para agregar los tres tiempos de inicio y actualizar la función pública. Si aún no ejecutaste el SQL inicial, utiliza `supabase/schema.sql` actualizado.
-
-## Música mediante enlaces de YouTube
-
-En **Personalización → Canciones de 30 segundos** se aceptan enlaces directos a MP3/M4A/OGG **y enlaces de videos de YouTube** (`youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/shorts/...`).
-
-Para un enlace de YouTube: selecciona minuto y segundo de inicio, escucha la vista previa desde el **reproductor de YouTube** y guarda. La invitación mostrará también el video oficial, con el intervalo de 30 segundos (parámetros `start` y `end`, absolutos desde el inicio del video). No se descarga ni extrae el audio del servicio. Por las políticas de YouTube, el video debe permanecer visible y el visitante tiene que presionar Play; no se ofrece audio de fondo ni se puede garantizar reproducción de videos con inserción bloqueada o anuncios.
-
-Si se desea solo música con un reproductor discreto, se debe usar un archivo MP3/M4A/OGG propio o autorizado. Los enlaces públicos de YouTube son visibles para quien abra la invitación.
-
-
-## Seleccionar inicio y fin por separado (YouTube y MP3)
-
-En **Personalización → Canciones**, hay dos pares de campos **Inicio** y **Fin** (minutos y segundos), más una barra visual con **dos marcadores dorados** para arrastrar cada extremo. Por ejemplo, puedes seleccionar **1:15 → 1:45 (0:30)** o **2:23 → 2:40 (0:17)**. La aplicación limita el fragmento a un máximo de **30 segundos** y aplica exactamente ese intervalo también en la invitación pública. YouTube se reproduce en un video integrado visible y puede requerir pulsar Play.
-
-**Supabase:** el archivo `supabase/schema.sql` ya incluye `music_*_end` para proyectos nuevos. Si ya se creó la base de datos, **vuelve a ejecutar `supabase/migration_music_clips.sql`** en SQL Editor; es repetible e incorpora los campos de fin y el resultado público de la invitación. En modo demostración no requiere esta migración.
-
-
-### Arrastrar inicio y final como dos controles separados
-
-El selector de recortes ahora contiene una barra combinada con **dos extremos dorados realmente arrastrables** (con mouse o dedo) y, debajo, **dos deslizadores individuales** de inicio y fin similares al ejemplo del usuario. También es posible arrastrar la franja dorada completa para mover el fragmento. Cuando se desplaza un extremo más allá del otro, se mueve el intervalo completo para no superar 30 segundos. Los campos de minutos y segundos siguen disponibles. Los controles permiten ajustarse con teclado.
+> Antes de compartir enlaces reales hay que configurar Supabase. El modo demostración sigue almacenando los invitados y cambios solo en el navegador donde se editaron.
