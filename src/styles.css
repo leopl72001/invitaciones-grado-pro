@@ -320,3 +320,94 @@
  .ci-starburst,.ci-opening-glow{display:none!important}
  .invitation-opened .invite-hero-content{animation:none!important}
 }
+
+
+/* Apertura v3: corrección del fallo de capas que escondía el giro del sobre.
+   La tapa debe seguir delante del bolsillo durante los 1.65 s de apertura. */
+.ci-screen .ci-envelope {
+  perspective: 1100px;
+  transform-style:flat;
+  overflow:visible;
+}
+.ci-screen .ci-envelope-back::after{
+  content:"";
+  position:absolute;
+  inset:0 0 42%;
+  background:linear-gradient(180deg,#8a663f,#b08a57);
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  opacity:.75;
+}
+.ci-screen .ci-envelope-flap {
+  z-index:12 !important;
+  transform-origin:50% 0%;
+  transform:rotateX(0deg);
+  backface-visibility:visible;
+  transition:transform 1.55s cubic-bezier(.15,.58,.18,1) !important;
+  filter:drop-shadow(0 3px 5px #65441b42);
+  will-change:transform;
+}
+.ci-screen.ci-idle .ci-envelope-flap,
+.ci-screen.ci-unsealing .ci-envelope-flap{
+  transform:rotateX(0deg);
+  z-index:12 !important;
+}
+.ci-screen.ci-opening .ci-envelope-flap{
+  transform:rotateX(-178deg) !important;
+  z-index:12 !important;
+}
+.ci-screen.ci-revealing .ci-envelope-flap,
+.ci-screen.ci-zooming .ci-envelope-flap{
+  transform:rotateX(-178deg) !important;
+  z-index:2 !important;
+}
+.ci-screen.ci-unsealing .ci-envelope-seal{
+  opacity:0;
+  transform:translate(-50%,-135%) rotate(44deg) scale(.18);
+  transition:opacity .45s ease,transform .65s ease;
+}
+.ci-screen.ci-opening .ci-envelope-trigger{
+  transform:translateY(10px) scale(1.055);
+  transition:transform .7s ease;
+}
+.ci-screen.ci-revealing .ci-envelope-trigger{
+  transform:translateY(5px) scale(1.045);
+  transition:transform .6s ease;
+}
+.ci-screen .ci-envelope-trigger{
+  transform-origin:50% 50%;
+}
+.ci-screen.ci-idle .ci-card,
+.ci-screen.ci-unsealing .ci-card,
+.ci-screen.ci-opening .ci-card{
+  visibility:hidden !important;
+  opacity:0 !important;
+  transform:translate(-50%,85%) scale(.6) !important;
+}
+.ci-screen.ci-revealing .ci-card{
+  visibility:visible !important;
+  opacity:1 !important;
+  z-index:3 !important;
+  transform:translate(-50%,-39%) scale(1.05) !important;
+}
+.ci-screen.ci-zooming .ci-card{
+  visibility:visible !important;
+  opacity:1 !important;
+  z-index:10 !important;
+  transform:translate(-50%,-43%) scale(8) !important;
+}
+.ci-phase-caption{
+  font-size:12px;
+  color:#efd6a4;
+  line-height:1.5;
+  letter-spacing:.03em;
+  min-height:20px;
+  margin:0;
+  transition:opacity .3s ease;
+}
+.ci-screen.ci-opening .ci-phase-caption{color:#ffe6b7}
+.ci-screen.ci-revealing .ci-phase-caption,
+.ci-screen.ci-zooming .ci-phase-caption{opacity:0}
+@media(prefers-reduced-motion:reduce){
+ .ci-screen .ci-envelope-flap{transition:none!important}
+ .ci-screen .ci-envelope-trigger{transition:none!important}
+}
