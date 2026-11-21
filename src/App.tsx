@@ -127,7 +127,16 @@ function Filmstrip({photos}:{photos:string[]}) {
 
 function Confetti({active}:{active:boolean}) {
   if (!active) return null;
-  return <div className="confetti" aria-hidden="true">{Array.from({length:65},(_,i)=><i key={i} style={{'--x':`${(i*37)%100}vw`,'--delay':`${(i*7)%17/10}s`,'--duration':`${3+(i%7)/4}s`,'--angle':`${i*31}deg`,'--tone':i%3===0?'#dfbc76':i%3===1?'#fff5df':'#9db3d8'} as CSSProperties}/>)}</div>;
+  const palette=['#f9d58a','#fff3cf','#d9ab62','#e0ecff','#8cbada','#f1d4b4','#e6c78c'];
+  return <div className="confetti confetti-party" aria-hidden="true">{Array.from({length:125},(_,i)=><i key={i} style={{
+    '--x':`${(i*53+7)%100}vw`,
+    '--delay':`${(i*17)%49/28}s`,
+    '--duration':`${3.25+(i%11)*0.29}s`,
+    '--tone':palette[i%palette.length],
+    '--drift':`${(i%2===0?1:-1)*(28+(i*19)%175)}px`,
+    '--twist':`${(i*137)%1080}deg`,
+    '--size':`${5+(i%5)*2}px`
+  } as CSSProperties}/>)}</div>;
 }
 
 
@@ -144,6 +153,7 @@ function CinematicIntro({
   unsupportedMusic:boolean;
 }) {
   const animating = phase!=='idle';
+  const mathGlyphs=['∑','π','√','∞','∫','Δ','θ','φ','α','∂','∇','≈','x²','Ω','β','λ'];
   const phaseText:Record<IntroPhase,string> = {
     idle:'Toca el sobre para descubrir tu invitación',
     unsealing:'El sello se rompe…',
@@ -170,13 +180,13 @@ function CinematicIntro({
       <div className="ci-stage-ring" aria-hidden="true"/>
       <div className="ci-stage-halo" aria-hidden="true"/>
       <div className="ci-opening-glow" aria-hidden="true"/>
-      <div className="ci-starburst" aria-hidden="true">
-        {Array.from({length:50},(_,i)=><span key={i} style={{
+      <div className="ci-starburst ci-math-burst" aria-hidden="true">
+        {Array.from({length:56},(_,i)=><span key={i} style={{
           '--burst-angle':`${(i*137.507)%360}deg`,
-          '--burst-distance':`${120+(i%7)*29}px`,
-          '--burst-delay':`${(i%9)*0.048}s`,
-          '--burst-size':`${12+(i%4)*6}px`
-        } as CSSProperties}>{i%3===0?'✧':i%3===1?'✦':'✳'}</span>)}
+          '--burst-distance':`${150+(i%8)*31}px`,
+          '--burst-delay':`${(i%10)*0.047}s`,
+          '--burst-size':`${17+(i%5)*5}px`
+        } as CSSProperties}>{mathGlyphs[i%mathGlyphs.length]}</span>)}
       </div>
       <button type="button" className="ci-envelope-trigger" onClick={onOpen} disabled={animating} aria-label="Abrir el sobre y descubrir la invitación">
         <span className="ci-envelope">
@@ -208,6 +218,18 @@ function CinematicIntro({
       <p className="ci-phase-caption" aria-live="polite">{phaseText[phase]}</p>
       <div className="ci-date">18 · 12 · 2026 <span>✦</span> 6:00 P. M.</div>
       {unsupportedMusic && <p className="ci-audio-warning" role="status">Para escuchar la música de fondo, configura un archivo MP3 en Personalización.</p>}
+    </div>
+    <div className="ci-warp" aria-hidden="true">
+      <div className="ci-warp-core"/>
+      <div className="ci-warp-lines">
+        {Array.from({length:56},(_,i)=><i key={i} style={{
+          '--warp-angle':`${(i*137.507)%360}deg`,
+          '--warp-delay':`${(i%12)*0.052}s`,
+          '--warp-length':`${45+(i%8)*21}px`,
+          '--warp-width':`${1+(i%3)}px`
+        } as CSSProperties}/>)}
+      </div>
+      <div className="ci-warp-rings"><i/><i/><i/><i/></div>
     </div>
     <div className="ci-transition-glow" aria-hidden="true"/>
   </div>;
@@ -346,7 +368,17 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
         <section className="invite-hero">
           <div className="hero-shine"/><div className="math-stars math-stars-open" aria-hidden="true"><span>∑</span><span>∞</span><span>π</span><span>√</span><span>∫</span><span>α</span><span>≡</span></div>
           <FloatingLights/>
-          {usablePhotos.length>0&&<div className="hero-photo-orbit" aria-hidden="true"><img src={usablePhotos[photoIndex%usablePhotos.length]} alt=""/></div>}
+          <div className="hero-math-universe" aria-hidden="true">
+            <div className="hero-math-ring hero-math-ring-a"/>
+            <div className="hero-math-ring hero-math-ring-b"/>
+            <div className="hero-math-glow"/>
+            {['∑','π','∞','√','Δ','∫','θ','φ','α','∂','x²','≈'].map((glyph,i)=><span key={i} style={{
+              '--orbit-x':`${8+(i*37)%83}%`,
+              '--orbit-y':`${8+(i*29)%80}%`,
+              '--orbit-delay':`${-(i*3.1)%17}s`,
+              '--orbit-time':`${8+(i%5)*2}s`
+            } as CSSProperties}>{glyph}</span>)}
+          </div>
           <div className="invite-hero-content"><div className="hero-topline"><span/> UNA NOCHE PARA RECORDAR <span/></div>
             <div className="line-illustration"><GraduationCap size={47} strokeWidth={1.1}/><span>✧</span></div>
             <p className="script hero-script">El gran día</p><h1>{settings.graduate_name}</h1><div className="hero-degree"><span>✦</span> {settings.degree} <span>✦</span></div>

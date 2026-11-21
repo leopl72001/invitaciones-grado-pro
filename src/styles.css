@@ -411,3 +411,168 @@
  .ci-screen .ci-envelope-flap{transition:none!important}
  .ci-screen .ci-envelope-trigger{transition:none!important}
 }
+
+
+/* GradoPro Aurora: símbolos matemáticos, túnel de velocidad y celebración elegante */
+/* 1. Caracteres tipográficos: nunca emoji verde ni iconos de aplicación. */
+.ci-math-burst span {
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-style: italic;
+  font-weight: 500;
+  font-variant-emoji: text;
+  color: #ffe7ad !important;
+  background: transparent !important;
+  border: 0 !important;
+  text-shadow: 0 0 5px #f9dda2, 0 0 20px #edbd6c95 !important;
+  line-height: 1;
+  filter: drop-shadow(0 0 5px #edc27f80);
+}
+.ci-screen.ci-unsealing .ci-math-burst span,
+.ci-screen.ci-opening .ci-math-burst span {
+  animation-duration: 2.05s !important;
+}
+/* 2. Sin letras gigantes: la tarjeta se atenua mientras aparece un viaje de luz. */
+.ci-screen.ci-zooming .ci-envelope .ci-card,
+.ci-screen.ci-zooming .ci-card {
+  visibility: visible !important;
+  transform: translate(-50%,-39%) scale(1.12) !important;
+  opacity: 0 !important;
+  filter: blur(6px) brightness(1.5) !important;
+  transition: transform .6s ease, opacity .6s ease, filter .6s ease !important;
+}
+.ci-screen.ci-zooming .ci-envelope-trigger {
+  opacity: 0;
+  transition: opacity .48s ease !important;
+}
+.ci-warp {
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+  perspective: 750px;
+  background: radial-gradient(ellipse at 50% 49%, #f8e4b52c 0%, #a9c6ec24 12%, #11264b 52%, #081129 100%);
+}
+.ci-screen.ci-zooming .ci-warp {
+  animation: ci-warp-appear 1.63s cubic-bezier(.2,.7,.15,1) both;
+}
+@keyframes ci-warp-appear {
+  0% { opacity: 0; filter: brightness(.7); }
+  12% { opacity: 1; filter: brightness(1); }
+  68% { opacity: 1; filter: brightness(1.3); }
+  100% { opacity: 1; filter: brightness(1.6); }
+}
+.ci-warp-core {
+  position: absolute;
+  left: 50%; top: 49%;
+  width: min(34vw, 190px); aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe6 0%, #ffdf9c 13%, #bdcfecb3 28%, #e4c68b28 50%, transparent 75%);
+  transform: translate(-50%, -50%) scale(.12);
+  box-shadow: 0 0 55px #eccd9780;
+}
+.ci-screen.ci-zooming .ci-warp-core {
+  animation: ci-warp-core-go 1.6s ease-in forwards;
+}
+@keyframes ci-warp-core-go {
+  0% { transform: translate(-50%,-50%) scale(.12); opacity: .5; }
+  48% { transform: translate(-50%,-50%) scale(1.9); opacity: .7; }
+  100% { transform: translate(-50%,-50%) scale(13); opacity: .94; }
+}
+.ci-warp-lines {position:absolute;inset:0;transform:translateZ(0)}
+.ci-warp-lines i {
+  position: absolute;
+  left: 50%; top: 49%;
+  width: var(--warp-width);
+  height: var(--warp-length);
+  transform-origin: 50% 0%;
+  background: linear-gradient(to bottom, transparent 0%, #f9f0d9 18%, #fff8eb 45%, #a6d7ff 83%, transparent 100%);
+  border-radius: 100%;
+  filter: drop-shadow(0 0 6px #bad9fcaa);
+  opacity: 0;
+  transform: rotate(var(--warp-angle)) translateY(-12px) scaleY(.08);
+}
+.ci-screen.ci-zooming .ci-warp-lines i {
+  animation: ci-light-streak 1.03s cubic-bezier(.1,.5,.2,1) var(--warp-delay) 2 both;
+}
+@keyframes ci-light-streak {
+  0% {opacity:0; transform: rotate(var(--warp-angle)) translateY(-6px) scaleY(.06)}
+  20% {opacity:.95}
+  74% {opacity:.9}
+  100% {opacity:0; transform: rotate(var(--warp-angle)) translateY(-74vh) scaleY(5.6)}
+}
+.ci-warp-rings {position:absolute;inset:0;pointer-events:none}
+.ci-warp-rings i {
+  position:absolute;left:50%;top:49%;width:130px;aspect-ratio:1;
+  border:1px solid #f5e5cfc9;border-radius:50%;
+  transform:translate(-50%,-50%) scale(.05);
+  opacity:0;box-shadow:0 0 35px #e5c17c33,inset 0 0 35px #b9d6ff22;
+}
+.ci-screen.ci-zooming .ci-warp-rings i {animation:ci-light-ring 1.18s ease-in calc(var(--ring-delay, 0s)) both}
+.ci-warp-rings i:nth-child(2){--ring-delay:.19s}
+.ci-warp-rings i:nth-child(3){--ring-delay:.38s}
+.ci-warp-rings i:nth-child(4){--ring-delay:.57s}
+@keyframes ci-light-ring {
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.06)}
+  15%{opacity:.8}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(13)}
+}
+/* 3. Portada limpia: solo matemáticas flotantes, sin fotografía en la esquina. */
+.invite-hero .hero-photo-orbit {display:none!important}
+.invite-hero {overflow:hidden}
+.hero-math-universe{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;perspective:800px}
+.hero-math-universe>span{
+  position:absolute;top:var(--orbit-y);left:var(--orbit-x);font-family:Georgia,'Times New Roman',serif;
+  font-size:clamp(21px,3.5vw,52px);line-height:1;color:#dfbb7a6b;
+  font-style:italic;text-shadow:0 0 18px #deb86e24;opacity:.65;
+  animation:hero-formula-float var(--orbit-time) ease-in-out var(--orbit-delay) infinite alternate;
+}
+@keyframes hero-formula-float{
+  0%{opacity:.18;transform:translate3d(-16px,19px,-90px) rotateY(-23deg) rotate(-9deg)}
+  50%{opacity:.72;transform:translate3d(14px,-18px,65px) rotateY(18deg) rotate(8deg)}
+  100%{opacity:.26;transform:translate3d(-7px,12px,-50px) rotateY(-18deg) rotate(-4deg)}
+}
+.hero-math-ring {position:absolute;left:50%;top:46%;width:min(90vw,680px);aspect-ratio:1; border:1px solid #eacb9252;border-radius:50%;opacity:.22;transform-style:preserve-3d}
+.hero-math-ring-a{animation:hero-tilt-a 22s linear infinite}
+.hero-math-ring-b{width:min(69vw,500px);border-style:dashed;border-color:#b6cbed70;animation:hero-tilt-b 28s linear infinite}
+.hero-math-glow{position:absolute;left:50%;top:45%;width:min(78vw,560px);aspect-ratio:1;background:radial-gradient(circle,#d8bc6e24,transparent 68%);transform:translate(-50%,-50%);animation:hero-glow-breathe 8s ease-in-out infinite alternate}
+@keyframes hero-tilt-a{from{transform:translate(-50%,-50%) rotateX(67deg) rotateY(-8deg) rotateZ(0deg)}to{transform:translate(-50%,-50%) rotateX(67deg) rotateY(-8deg) rotateZ(360deg)}}
+@keyframes hero-tilt-b{from{transform:translate(-50%,-50%) rotateX(69deg) rotateY(29deg) rotateZ(360deg)}to{transform:translate(-50%,-50%) rotateX(69deg) rotateY(29deg) rotateZ(0deg)}}
+@keyframes hero-glow-breathe{to{transform:translate(-50%,-50%) scale(1.25);opacity:.45}}
+.invite-hero-content {position:relative;z-index:2}
+/* 4. Lluvia festiva: confeti metálico con profundidad, cinta y giro en 3D. */
+.confetti-party {z-index:130}
+.confetti-party i {
+  width:var(--size);height:calc(var(--size)*1.65);
+  background:var(--tone);border-radius:1px;
+  box-shadow:0 0 5px #fff1ce91;
+  opacity:0;top:-42px;
+  animation:party-fall-3d var(--duration) cubic-bezier(.17,.38,.4,.95) var(--delay) both !important;
+  will-change:transform;
+  backface-visibility:visible;
+}
+.confetti-party i:nth-child(4n) {border-radius:50%;height:var(--size);box-shadow:0 0 8px #f8dc95c2}
+.confetti-party i:nth-child(7n) {width:3px;height:22px;border-radius:100% 0 100% 0}
+.confetti-party i:nth-child(6n) {filter:brightness(1.2)}
+@keyframes party-fall-3d {
+  0%{transform:translate3d(0,-4vh,0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);opacity:0}
+  10%{opacity:1}
+  55%{transform:translate3d(calc(var(--drift)*.55),53vh,80px) rotateX(380deg) rotateY(210deg) rotateZ(260deg);opacity:1}
+  94%{opacity:.9}
+  100%{transform:translate3d(var(--drift),110vh,-80px) rotateX(860deg) rotateY(800deg) rotateZ(var(--twist));opacity:0}
+}
+/* Mobile: keep visual interest without overloading iPhone Safari */
+@media(max-width:760px) {
+  .ci-math-burst span {font-size:calc(var(--burst-size)*.78)!important}
+  .ci-warp-lines i:nth-child(n+39) {display:none}
+  .confetti-party i:nth-child(n+96){display:none}
+  .hero-math-universe>span{font-size:clamp(21px,6vw,36px);opacity:.35}
+  .hero-math-ring{width:110vw}
+}
+@media(prefers-reduced-motion:reduce){
+  .ci-warp{display:none!important}
+  .ci-math-burst span{animation:none!important;opacity:0!important}
+  .hero-math-universe>span,.hero-math-ring,.hero-math-glow {animation:none!important}
+  .confetti-party i{animation:none!important;display:none!important}
+}
