@@ -20,6 +20,9 @@ export interface EventSettings {
   music_default_url: string;
   music_special_1_url: string;
   music_special_2_url: string;
+  music_default_start: number;
+  music_special_1_start: number;
+  music_special_2_start: number;
   rsvp_deadline: string;
 }
 
@@ -68,5 +71,6 @@ export const DEFAULT_EVENT: EventSettings = {
   gift_ideas_text: 'También puedes sorprenderme con un detalle especial. El cariño y los buenos deseos siempre serán bienvenidos.',
   photo_urls: ['', '', ''],
   music_default_url: '', music_special_1_url: '', music_special_2_url: '',
+  music_default_start: 0, music_special_1_start: 0, music_special_2_start: 0,
   rsvp_deadline: '2026-12-15'
 };

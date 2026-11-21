@@ -21,6 +21,9 @@ create table if not exists public.events (
   music_default_url text not null default '',
   music_special_1_url text not null default '',
   music_special_2_url text not null default '',
+  music_default_start numeric not null default 0 check (music_default_start >= 0),
+  music_special_1_start numeric not null default 0 check (music_special_1_start >= 0),
+  music_special_2_start numeric not null default 0 check (music_special_2_start >= 0),
   rsvp_deadline date not null default '2026-12-15',
   created_at timestamptz not null default now()
 );
@@ -98,7 +101,11 @@ begin
       'photo_urls', v_event.photo_urls,
       'music_default_url', v_event.music_default_url,
       'music_special_1_url', v_event.music_special_1_url,
-      'music_special_2_url', v_event.music_special_2_url, 'rsvp_deadline', v_event.rsvp_deadline
+      'music_special_2_url', v_event.music_special_2_url,
+      'music_default_start', v_event.music_default_start,
+      'music_special_1_start', v_event.music_special_1_start,
+      'music_special_2_start', v_event.music_special_2_start,
+      'rsvp_deadline', v_event.rsvp_deadline
     ),
     'guest', jsonb_build_object(
       'id', v_guest.id, 'name', v_guest.name, 'seats', v_guest.seats,

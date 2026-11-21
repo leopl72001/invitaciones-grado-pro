@@ -8,6 +8,7 @@ Aplicación React + TypeScript + Vite para la fiesta de **Licenciatura en Matem�
 - Panel administrativo para **crear, editar, eliminar y filtrar invitados**, cada uno con **nombre, grupo, cupos, teléfono y enlace exclusivo**.
 - Catálogo de invitaciones y botones **Copiar enlace**, **Vista previa** y **Enviar por WhatsApp**.
 - Grupos de invitados (familia, amigos, etc.) y cupos sugeridos por grupo.
+- Selector musical estilo Instagram: pega una URL directa de audio, escucha la vista previa y mueve el inicio de la ventana de **30 segundos**; los enlaces a páginas de YouTube/Spotify no entregan un archivo de audio utilizable.
 - Tres canciones configurables: una general y **dos canciones especiales** que se asignan a dos invitaciones específicas. El sistema impide usar cada canción especial en más de una invitación.
 - Formulario de **confirmación de asistencia** con validación de cupos, mensaje y opción de modificar la respuesta.
 - Registro de respuestas (el panel actualiza cada 12 segundos), cantidad de asistentes y exportación CSV; ideas de regalos en dos categorías.
@@ -91,3 +92,11 @@ Los navegadores móviles normalmente **no permiten reproducir audio automáticam
 - Textos de regalos y fecha límite de confirmación.
 
 Los datos de ejemplo “Familia de ejemplo” e “Invitado especial” sirven para probar el catálogo. Puedes editarlos o eliminarlos.
+
+## Selector de fragmentos musicales (nueva función)
+
+En **Personalización → Canciones de 30 segundos** pega un enlace HTTPS que apunte a un archivo reproducible (MP3, M4A, OGG, WAV) o utiliza **Subir** (requiere Supabase). La duración se detecta en el navegador, aparece una línea de tiempo visual y puedes seleccionar el punto de inicio y pulsar **Escuchar recorte**. Después, pulsa **Guardar cambios**. La invitación comienza en ese segundo y detiene el audio pasados 30 segundos. El archivo no se corta físicamente: se configura el intervalo de reproducción, por lo que no consume almacenamiento extra.
+
+Los enlaces normales a YouTube, Spotify o Instagram son páginas/plataformas, **no enlaces directos a archivos de audio**, y no se pueden convertir automáticamente en canciones recortadas. Usa música propia o autorizada. Algunas URLs directas protegidas también pueden impedir el acceso al audio.
+
+Si ya creaste las tablas de Supabase con la versión anterior, ejecuta **`supabase/migration_music_clips.sql`** en SQL Editor una sola vez para agregar los tres tiempos de inicio y actualizar la función pública. Si aún no ejecutaste el SQL inicial, utiliza `supabase/schema.sql` actualizado.
