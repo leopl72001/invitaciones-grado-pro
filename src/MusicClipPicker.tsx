@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import { Music2, Pause, Play, Scissors, Upload, Volume2 } from 'lucide-react';
 import './MusicClipPicker.css';
+import { isYouTubeAddress, youtubeVideoId, YouTubeClipEmbed } from './youtube';
 
 const CLIP_SECONDS = 30;
 
@@ -34,7 +35,9 @@ export default function MusicClipPicker({ label, value, start, onValue, onStart,
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [audioError, setAudioError] = useState('');
-  const validLink = isAudioSource(value);
+  const youtubeId = youtubeVideoId(value);
+  const youtubeLink = isYouTubeAddress(value);
+  const validLink = !youtubeLink && isAudioSource(value);
   const maxStart = duration === null ? 0 : Math.max(0, duration - CLIP_SECONDS);
   const selectedStart = Math.min(Math.max(0, Number(start) || 0), maxStart);
 
@@ -98,13 +101,26 @@ export default function MusicClipPicker({ label, value, start, onValue, onStart,
     <div className="asset-head"><strong>{label}</strong><span>Selecciona un fragmento de 30 segundos</span></div>
     <div className="asset-control">
       <div className="asset-input-icon"><Music2 size={18} /></div>
-      <input aria-label={`Enlace de audio para ${label}`} type="url" value={value} placeholder="Pega un enlace directo a MP3, M4A u OGG" onChange={e => onValue(e.target.value)} />
+      <input aria-label={`Enlace de audio para ${label}`} type="url" value={value} placeholder="Pega un enlace de YouTube o MP3 / M4A / OGG" onChange={e => onValue(e.target.value)} />
       <input ref={picker} hidden type="file" accept="audio/*,.mp3,.m4a,.ogg,.wav" onChange={(e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]; if (file) onUpload(file); e.target.value = '';
       }} />
       <button type="button" className="outline-button" disabled={uploading} onClick={() => picker.current?.click()}><Upload size={16} /> {uploading ? 'Subiendo...' : 'Subir'}</button>
     </div>
-    {!!value && !validLink && <p className="clip-warning">Este enlace no es un archivo de audio directo. Los enlaces de YouTube, Spotify y otras plataformas no se pueden recortar aquí. Utiliza un MP3/M4A/OGG propio o autorizado.</p>}
+    {!!value && !validLink && !youtubeId && <p className="clip-warning">{youtubeLink ? 'Este enlace de YouTube no contiene un video válido. Copia el enlace de un video específico (no una playlist).' : 'Este enlace no es un archivo de audio reproducible. Usa YouTube o un enlace directo a MP3, M4A u OGG.'}</p>}
+    {youtubeId && <div className="clip-workspace clip-youtube-workspace">
+      <div className="clip-tool-title"><span><Scissors size={16}/> FRAGMENTO DE YOUTUBE</span><span>Duración 0:30</span></div>
+      <p className="youtube-clip-intro">Elige el segundo de inicio y reproduce el video aquí. Se detendrá en el segundo de finalización. El video debe permanecer visible durante la reproducción.</p>
+      <div className="youtube-editor-row">
+        <label>Minuto de inicio<input type="number" min="0" max="999" value={Math.floor(Math.max(0, Number(start) || 0) / 60)} onChange={e=>onStart(Math.max(0, Number(e.target.value) || 0) * 60 + (Math.floor(start) % 60))}/></label>
+        <label>Segundo<input type="number" min="0" max="59" value={Math.floor(Math.max(0, Number(start) || 0) % 60)} onChange={e=>onStart(Math.floor(Math.max(0, Number(start) || 0) / 60) * 60 + Math.min(59, Math.max(0, Number(e.target.value) || 0)))}/></label>
+        <div className="youtube-editor-selection"><span>Inicio <strong>{timeLabel(start)}</strong></span><span>Fin <strong>{timeLabel(Math.max(0, Number(start) || 0) + 30)}</strong></span></div>
+      </div>
+      <input className="clip-range" aria-label={`Elegir segundo inicial de YouTube para ${label}`} type="range" min={0} max={Math.max(600, Math.ceil((Number(start) || 0) / 300) * 300)} step={1} value={Math.max(0, Math.floor(Number(start) || 0))} onChange={e=>onStart(Number(e.target.value))}/>
+      <div className="clip-timeline"><span>0:00</span><span>Desliza para elegir dónde comienza la canción</span><span>{timeLabel(Math.max(600, Math.ceil((Number(start) || 0) / 300) * 300))}</span></div>
+      <YouTubeClipEmbed id={youtubeId} start={start} title={`Escuchar fragmento de ${label}`} />
+      <p className="clip-save-help">Pulsa <strong>Play dentro del video</strong> para escuchar el fragmento. Puedes cambiar los minutos y segundos y después pulsar <strong>Guardar cambios</strong>. Si el video no permite insertarse, prueba con otro enlace.</p>
+    </div>}
     {validLink && <>
       <audio ref={audio} src={value} preload="metadata" onLoadedMetadata={e => {
         const length = e.currentTarget.duration;
