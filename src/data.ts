@@ -151,13 +151,14 @@ export async function uploadAsset(file: File, section: string, userId: string): 
   return supabase.storage.from('invitation-assets').getPublicUrl(path).data.publicUrl;
 }
 
-export function invitationUrl(token: string) {
-  // URL canónica y única por invitado: evita copiar parámetros de pruebas (?v=...).
-  // El token en el fragmento mantiene el nombre/cupos privados para la invitación.
-  return `${window.location.origin}${import.meta.env.BASE_URL}#/invitacion/${token}`;
+export function invitationUrl(token: string, assignedToGroup = false) {
+  // La pista de música forma parte de la URL compartida y no expone datos personales.
+  // El invitado sigue identificado exclusivamente por su token.
+  const musicSuffix = assignedToGroup ? '/grupo' : '';
+  return `${window.location.origin}${import.meta.env.BASE_URL}#/invitacion/${token}${musicSuffix}`;
 }
 export function whatsappUrl(guest: Guest, settings: EventSettings) {
-  const invite = invitationUrl(guest.share_token);
+  const invite = invitationUrl(guest.share_token, Boolean(guest.group_id));
   const msg = `🎓 ¡Tienes una invitación, ${guest.name}!\n\nMe encantaría contar contigo para celebrar mi graduación en ${settings.degree}.\n\nTu invitación es personal y tiene ${guest.seats} ${guest.seats === 1 ? 'cupo' : 'cupos'}.\n\n✨ Abre este enlace para ver todos los detalles y confirmar tu asistencia:\n${invite}`;
   const phone = guest.phone.replace(/[^\d]/g, '');
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
