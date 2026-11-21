@@ -115,3 +115,12 @@ El panel no solicita correo ni contraseña. Usa el método documentado de Supaba
 **Acción indispensable:** en Supabase, habilita `Authentication → Sign In / Providers → Anonymous Sign-Ins`. Si no lo habilitas, GradoPro muestra instrucciones para activarlo y el botón «Entrar sin contraseña».
 
 **Limitación importante:** esta sesión pertenece al navegador y se guarda localmente. No borres los datos/cookies del sitio ni uses modo incógnito para gestionar el evento: perder la sesión puede impedirte volver a editar los invitados existentes. Los enlaces de los invitados continuarán funcionando en la nube. Para recuperar la gestión desde otro dispositivo será necesario incorporar un mecanismo de recuperación seguro. El panel es público y crear sesiones anónimas está sujeto a uso/abuso; para despliegue comercial hacen falta restricciones adicionales.
+
+
+## Acceso directo al panel (sin pantalla de login)
+
+El panel abre sin formularios de inicio de sesión. Si Supabase permite **Anonymous Sign-Ins**, inicia automáticamente una sesión de administrador local al navegador. Si esa opción está desactivada o falla, el panel permanece disponible en **modo local provisional** y muestra un aviso sin bloquear el acceso.
+
+En modo local los datos se guardan únicamente en el almacenamiento de ese navegador, los enlaces no se pueden compartir a otros dispositivos y la subida a Supabase Storage no funciona. Para habilitar la nube, activa **Authentication → Anonymous Sign-Ins** en Supabase y recarga. Al conectar la nube no se importan automáticamente los invitados creados durante las pruebas locales.
+
+**Privacidad y recuperación:** la sesión anónima se guarda en el navegador. Si se borra, puede perderse el acceso para editar los datos anteriores, aunque estos sigan en Supabase. Enlaces de invitados públicos únicamente deben distribuirse una vez activada la nube; el panel sin login no ofrece protección contra que terceros creen sus propios espacios, por lo que para uso abierto/comercial debe implementarse una estrategia de recuperación y administración segura.
