@@ -200,3 +200,123 @@
  .ci-spotlights,.ci-ambient-particles,.ci-stage-ring,.ci-stage-halo,.ci-envelope-trigger{animation:none!important}
  .ci-card,.ci-envelope-flap,.ci-actions,.ci-heading,.ci-transition-glow{transition:none!important}
 }
+
+
+/* Corrección de apertura: jamás mostrar la tarjeta detrás del sobre cerrado. */
+.ci-screen.ci-idle .ci-card,
+.ci-screen.ci-opening .ci-card{
+  visibility:hidden;
+  opacity:0;
+  transform:translate(-50%,85%) scale(.6);
+}
+.ci-card{
+  visibility:hidden;
+  opacity:0;
+  transform:translate(-50%,85%) scale(.6);
+  z-index:2;
+  transition:transform 1.62s cubic-bezier(.16,.82,.15,1),
+             opacity .34s ease,filter 1.2s ease;
+}
+.ci-screen.ci-revealing .ci-card{
+  visibility:visible;
+  opacity:1;
+  transform:translate(-50%,-39%) scale(1.05);
+  z-index:3;
+}
+.ci-screen.ci-zooming .ci-card{
+  visibility:visible;
+  opacity:1;
+  z-index:10;
+  transform:translate(-50%,-43%) scale(8);
+  filter:brightness(1.18) drop-shadow(0 0 35px #e8c88b55);
+  transition:transform 1.53s cubic-bezier(.2,.8,.17,1),filter 1.4s ease;
+}
+.ci-screen.ci-opening .ci-envelope-flap,
+.ci-screen.ci-revealing .ci-envelope-flap,
+.ci-screen.ci-zooming .ci-envelope-flap{
+  transform:rotateX(180deg);
+  z-index:2;
+}
+.ci-screen.ci-revealing .ci-envelope-pocket{z-index:4}
+.ci-screen.ci-zooming .ci-envelope-pocket,
+.ci-screen.ci-zooming .ci-envelope-back,
+.ci-screen.ci-zooming .ci-envelope-flap{
+  opacity:0;
+  transform:translateY(26px) scale(.91);
+  transition:opacity .5s ease,transform .6s ease;
+}
+.ci-screen.ci-opening .ci-envelope-seal,
+.ci-screen.ci-revealing .ci-envelope-seal,
+.ci-screen.ci-zooming .ci-envelope-seal{
+  opacity:0;transform:translate(-50%,-50%) scale(.1) rotate(45deg)
+}
+.ci-opening-glow{
+  position:absolute;z-index:3;left:50%;top:51%;width:150px;height:150px;
+  border:1px solid #f8da9a88;border-radius:50%;pointer-events:none;opacity:0;
+  transform:translate(-50%,-50%) scale(.3);
+  background:radial-gradient(circle,#fff0c54a,#ecbe7830 32%,transparent 70%);
+}
+.ci-starburst{
+  position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible;
+}
+.ci-starburst span{
+  position:absolute;left:50%;top:51%;opacity:0;color:#ffe4a9;
+  font-size:var(--burst-size);line-height:1;display:block;
+  text-shadow:0 0 9px #e9c57d,0 0 20px #f9dcb477;
+  transform:translate(-50%,-50%) rotate(var(--burst-angle));
+  will-change:transform,opacity;
+}
+.ci-screen:not(.ci-idle) .ci-starburst span{
+  animation:ciStarlightFly 1.85s cubic-bezier(.12,.65,.35,1) var(--burst-delay) both;
+}
+@keyframes ciStarlightFly{
+  0%{transform:translate(-50%,-50%) rotate(var(--burst-angle)) translateX(0) scale(.15);opacity:0}
+  14%{opacity:1}
+  40%{opacity:1}
+  76%{opacity:.75}
+  100%{transform:translate(-50%,-50%) rotate(var(--burst-angle)) translateX(var(--burst-distance)) scale(.8);opacity:0}
+}
+.ci-screen:not(.ci-idle) .ci-opening-glow{
+  animation:ciMagicPulse 1.8s ease-out both;
+}
+@keyframes ciMagicPulse{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.25)}
+  22%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(3.4)}
+}
+.ci-screen:not(.ci-idle) .ci-stage-ring{
+  animation:ciMagicRing 2.5s ease-out both;
+}
+@keyframes ciMagicRing{
+  0%{opacity:.5;transform:scale(.87)}
+  50%{opacity:1;transform:scale(1.2)}
+  100%{opacity:0;transform:scale(1.65)}
+}
+.ci-screen.ci-revealing .ci-heading,
+.ci-screen.ci-revealing .ci-actions{
+  opacity:0;transform:translateY(-14px);pointer-events:none;
+}
+.ci-screen.ci-zooming .ci-heading,
+.ci-screen.ci-zooming .ci-actions{
+  opacity:0;transform:translateY(-22px);pointer-events:none;
+}
+.ci-screen.ci-zooming .ci-transition-glow{
+  opacity:.9;transition-delay:1.0s;
+}
+.invitation-opened .invite-hero-content{
+  animation:ciHeroWelcome 1.25s ease-out both;
+}
+@keyframes ciHeroWelcome{
+  from{opacity:0;transform:translateY(36px) scale(.94)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:620px){
+ .ci-screen.ci-zooming .ci-card{transform:translate(-50%,-43%) scale(8)}
+ .ci-starburst span{font-size:calc(var(--burst-size) * .8)}
+ .ci-screen.ci-revealing .ci-card{transform:translate(-50%,-39%) scale(1.03)}
+}
+@media(prefers-reduced-motion:reduce){
+ .ci-card{visibility:hidden;opacity:0;transition:none!important}
+ .ci-starburst,.ci-opening-glow{display:none!important}
+ .invitation-opened .invite-hero-content{animation:none!important}
+}
