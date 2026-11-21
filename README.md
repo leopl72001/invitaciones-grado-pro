@@ -4,11 +4,11 @@ Aplicación React + TypeScript + Vite para la fiesta de **Licenciatura en Matem�
 
 ## Incluye
 
-- Invitación elegante y responsiva: sobre animado, estrellas matemáticas, fotos Polaroid, confeti, desplazamientos animados, cuenta regresiva en vivo y música de hasta 30 segundos.
+- Invitación elegante y responsiva: sobre animado, estrellas matemáticas, fotos Polaroid, confeti, desplazamientos animados, cuenta regresiva en vivo y música con fragmentos de 30 segundos en repetición continua.
 - Panel administrativo para **crear, editar, eliminar y filtrar invitados**, cada uno con **nombre, grupo, cupos, teléfono y enlace exclusivo**.
 - Catálogo de invitaciones y botones **Copiar enlace**, **Vista previa** y **Enviar por WhatsApp**.
 - Grupos de invitados (familia, amigos, etc.) y cupos sugeridos por grupo.
-- Música de fondo sin reproductor visible: pega una URL de audio directo (MP3/M4A/OGG/WAV). El clip empieza al abrir el sobre y se detiene después de 30 segundos. YouTube no puede usarse como audio invisible.
+- Música de fondo sin reproductor visible: pega una URL de audio directo (MP3/M4A/OGG/WAV). El fragmento empieza al abrir el sobre, regresa al inicio cada 30 segundos y sigue sonando hasta pausarlo o salir de la invitación. YouTube no puede usarse como audio invisible.
 - Tres canciones configurables: una general y **dos canciones especiales** que se asignan a dos invitaciones específicas. El sistema impide usar cada canción especial en más de una invitación.
 - Formulario de **confirmación de asistencia** con validación de cupos, mensaje y opción de modificar la respuesta.
 - Registro de respuestas (el panel actualiza cada 12 segundos), cantidad de asistentes y exportación CSV; ideas de regalos en dos categorías.
@@ -98,7 +98,7 @@ Los datos de ejemplo “Familia de ejemplo” e “Invitado especial” sirven p
 
 - **Personalización → Música de las invitaciones:** pega el enlace directo de un MP3/M4A/OGG/WAV. Ya no hay editor de tijera ni video de YouTube en la invitación.
 - La **canción principal** corresponde a todos los invitados, salvo las dos invitaciones marcadas como **Especial 1** o **Especial 2**. La asignación se hace al crear/editar la invitación individual. Si una pista especial está vacía, se utiliza la principal.
-- Al tocar el sobre o **«Abrir mi invitación»**, se llama a `audio.play()` en ese mismo gesto para reproducir automáticamente el audio de fondo. Se detiene tras **30 segundos** y se puede pausar desde el icono de música.
+- Al tocar el sobre o **«Abrir mi invitación»**, se llama a `audio.play()` en ese mismo gesto para reproducir automáticamente el audio de fondo. Repite indefinidamente los **primeros 30 segundos** y se puede pausar desde el icono de música.
 - El reproductor de YouTube fue eliminado de la invitación. Si antes había un enlace de YouTube guardado, **no se oirá** hasta reemplazarlo por una URL de audio directo. El panel muestra una advertencia en ese campo. No se oculta el reproductor de YouTube, no se extrae su audio y no se promete reproducción automática sin interacción.
 - Al pegar otro enlace nuevo, la selección anterior se restablece a los primeros 30 segundos. El resto de ajustes, los grupos y las confirmaciones no se modifican.
 - Las canciones deben ser propias o contar con los permisos de uso correspondientes. El botón **Subir MP3** funciona después de configurar Supabase Storage.
@@ -124,3 +124,7 @@ El panel abre sin formularios de inicio de sesión. Si Supabase permite **Anonym
 En modo local los datos se guardan únicamente en el almacenamiento de ese navegador, los enlaces no se pueden compartir a otros dispositivos y la subida a Supabase Storage no funciona. Para habilitar la nube, activa **Authentication → Anonymous Sign-Ins** en Supabase y recarga. Al conectar la nube no se importan automáticamente los invitados creados durante las pruebas locales.
 
 **Privacidad y recuperación:** la sesión anónima se guarda en el navegador. Si se borra, puede perderse el acceso para editar los datos anteriores, aunque estos sigan en Supabase. Enlaces de invitados públicos únicamente deben distribuirse una vez activada la nube; el panel sin login no ofrece protección contra que terceros creen sus propios espacios, por lo que para uso abierto/comercial debe implementarse una estrategia de recuperación y administración segura.
+
+## Música de 30 segundos en bucle (noviembre de 2026)
+
+La música MP3/M4A/OGG/WAV se inicia al abrir el sobre. Al alcanzar el segundo 30, vuelve al segundo 0 sin pausar. El atributo `loop` también permite repetir canciones de duración inferior a 30 segundos. La reproducción continúa mientras la invitación siga abierta y no se pause desde el botón de música. Los enlaces de YouTube no pueden utilizarse para música de fondo invisible.
