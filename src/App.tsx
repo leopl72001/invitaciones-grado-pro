@@ -112,19 +112,6 @@ function PhotoStory({photos,active}:{photos:string[];active:number}) {
     </div>
   </section>;
 }
-function Filmstrip({photos}:{photos:string[]}) {
-  if(photos.length<2)return null;
-  const repeated=[...photos,...photos,...photos];
-  return <section className="filmstrip-section reveal">
-    <div className="section-eyebrow">INSTANTÁNEAS DE UN SUEÑO</div>
-    <h2>Momentos que <em>siempre recordaremos</em></h2>
-    <p className="section-lead">Cada foto cuenta un pedacito de esta historia.</p>
-    <div className="filmstrip-window" aria-label={`Galería de ${photos.length} fotografías`}>
-      <div className="filmstrip-track" aria-hidden="true">{repeated.map((url,i)=><div className="filmstrip-frame" key={`${i}-${url}`}><img src={url} loading="lazy" alt=""/><span>✦ {String(i%photos.length+1).padStart(2,'0')}</span></div>)}</div>
-    </div>
-  </section>;
-}
-
 function Confetti({active}:{active:boolean}) {
   if (!active) return null;
   const palette=['#f9d58a','#fff3cf','#d9ab62','#e0ecff','#8cbada','#f1d4b4','#e6c78c'];
@@ -300,7 +287,7 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
     if(!opened || !autoTour || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
     let timer:number;
     let stopped=false;
-    const chapters=['.invite-hero','.photo-section','.count-section','.photo-story-section','.detail-section','.invitee-section','.filmstrip-section','.rsvp-section'];
+    const chapters=['.invite-hero','.photo-section','.count-section','.photo-story-section','.detail-section','.invitee-section','.rsvp-section'];
     const pause=()=>setAutoTour(false);
     window.addEventListener('wheel',pause,{passive:true});
     window.addEventListener('touchstart',pause,{passive:true});
@@ -399,7 +386,6 @@ function Invitation({data,onRefresh}:{data:PublicInvite;onRefresh:()=>Promise<vo
           <div className="detail-card"><div className="detail-icon"><MapPin size={26}/></div><span className="small-label">NOS ENCONTRAREMOS EN</span><h3>{settings.venue_name}</h3><p>{settings.venue_address}</p>{safeHref(settings.maps_url) ? <a href={safeHref(settings.maps_url)} target="_blank" rel="noreferrer" className="detail-link">Ver ubicación <ExternalLink size={16}/></a> : <span className="detail-link muted-link">Dirección pendiente</span>}</div>
         </div></section>
         <section className="invitee-section reveal"><div className="section-eyebrow">UN LUGAR RESERVADO PARA TI</div><div className="quota-number">{String(guest.seats).padStart(2,'0')}</div><h2>{guest.seats===1?'Cupo reservado':'Cupos reservados'}</h2><p>{data.group_name ? `Grupo: ${data.group_name}. ` : ''}Preparamos {guest.seats===1?'un espacio especial':'estos espacios especiales'} para que compartamos esta celebración.</p></section>
-        <Filmstrip photos={usablePhotos}/>
         <section className="rsvp-section reveal" id="confirmacion"><div className="rsvp-ornament">✦</div><span className="section-eyebrow">TU RESPUESTA SIGNIFICA MUCHO</span><h2>¿Nos acompañas en <em>esta noche especial?</em></h2><p>Confirma tu asistencia {settings.rsvp_deadline ? `antes del ${new Intl.DateTimeFormat('es-CO',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${settings.rsvp_deadline}T12:00:00Z`))}` : 'lo antes posible'}.</p>
           {saved ? <div className="rsvp-confirmed"><CheckCircle2 size={43}/><h3>¡Respuesta guardada!</h3><p>{status==='confirmed'? `¡Qué alegría! Te esperamos con ${attendees} ${attendees===1?'asistente':'asistentes'}.`:'Gracias por avisarnos, te enviaremos nuestros mejores deseos.'}</p><button type="button" onClick={()=>setSaved(false)}>Modificar mi respuesta</button></div> : <form className="rsvp-form" onSubmit={save}>
             {guest.status!=='pending'&&<div className="previous-status">Tu respuesta anterior: <b>{statusText[guest.status]}</b>. Puedes actualizarla.</div>}
