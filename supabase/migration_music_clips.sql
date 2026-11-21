@@ -1,8 +1,11 @@
 -- Ejecutar en SQL Editor si ya instalaste schema.sql ANTES de agregar el selector musical.
 -- Si todavía no configuraste Supabase, usa el schema.sql actualizado en su lugar.
 alter table public.events add column if not exists music_default_start numeric not null default 0;
+alter table public.events add column if not exists music_default_end numeric not null default 30;
 alter table public.events add column if not exists music_special_1_start numeric not null default 0;
+alter table public.events add column if not exists music_special_1_end numeric not null default 30;
 alter table public.events add column if not exists music_special_2_start numeric not null default 0;
+alter table public.events add column if not exists music_special_2_end numeric not null default 30;
 
 create or replace function public.lookup_public_invitation(p_token text)
 returns jsonb
@@ -32,8 +35,11 @@ begin
       'music_special_1_url', v_event.music_special_1_url,
       'music_special_2_url', v_event.music_special_2_url,
       'music_default_start', v_event.music_default_start,
+      'music_default_end', v_event.music_default_end,
       'music_special_1_start', v_event.music_special_1_start,
+      'music_special_1_end', v_event.music_special_1_end,
       'music_special_2_start', v_event.music_special_2_start,
+      'music_special_2_end', v_event.music_special_2_end,
       'rsvp_deadline', v_event.rsvp_deadline
     ),
     'guest', jsonb_build_object(
@@ -45,4 +51,3 @@ begin
     'group_name', coalesce(v_group, '')
   );
 end; $$;
-

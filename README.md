@@ -103,8 +103,15 @@ Si ya creaste las tablas de Supabase con la versión anterior, ejecuta **`supaba
 
 ## Música mediante enlaces de YouTube
 
-En **Personalización → Canciones de 30 segundos** se aceptan enlaces directos a MP3/M4A/OGG **y enlaces a videos de YouTube** (`youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/shorts/...`).
+En **Personalización → Canciones de 30 segundos** se aceptan enlaces directos a MP3/M4A/OGG **y enlaces de videos de YouTube** (`youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/shorts/...`).
 
-Para YouTube, selecciona el minuto y el segundo de inicio en el editor, escucha la vista previa desde el reproductor oficial y guarda. La invitación también muestra el video oficial durante ese fragmento de 30 segundos (los parámetros `start` y `end` son segundos absolutos desde el inicio del video). No se descarga, extrae ni modifica audio de YouTube.
+Para un enlace de YouTube: selecciona minuto y segundo de inicio, escucha la vista previa desde el **reproductor de YouTube** y guarda. La invitación mostrará también el video oficial, con el intervalo de 30 segundos (parámetros `start` y `end`, absolutos desde el inicio del video). No se descarga ni extrae el audio del servicio. Por las políticas de YouTube, el video debe permanecer visible y el visitante tiene que presionar Play; no se ofrece audio de fondo ni se puede garantizar reproducción de videos con inserción bloqueada o anuncios.
 
-Debido a las condiciones de inserción de YouTube, **el reproductor debe estar visible** y el invitado debe tocar Play. No se puede utilizar YouTube como audio invisible de fondo. Algunos videos bloquean la reproducción en otras páginas y pueden mostrar anuncios. Para audio discreto usa un archivo MP3/M4A/OGG propio o autorizado.
+Si se desea solo música con un reproductor discreto, se debe usar un archivo MP3/M4A/OGG propio o autorizado. Los enlaces públicos de YouTube son visibles para quien abra la invitación.
+
+
+## Seleccionar inicio y fin por separado (YouTube y MP3)
+
+En **Personalización → Canciones**, hay dos pares de campos **Inicio** y **Fin** (minutos y segundos), más una barra visual con **dos marcadores dorados** para arrastrar cada extremo. Por ejemplo, puedes seleccionar **1:15 → 1:45 (0:30)** o **2:23 → 2:40 (0:17)**. La aplicación limita el fragmento a un máximo de **30 segundos** y aplica exactamente ese intervalo también en la invitación pública. YouTube se reproduce en un video integrado visible y puede requerir pulsar Play.
+
+**Supabase:** el archivo `supabase/schema.sql` ya incluye `music_*_end` para proyectos nuevos. Si ya se creó la base de datos, **vuelve a ejecutar `supabase/migration_music_clips.sql`** en SQL Editor; es repetible e incorpora los campos de fin y el resultado público de la invitación. En modo demostración no requiere esta migración.
