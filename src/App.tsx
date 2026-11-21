@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ChangeEvent, type ReactNode, type CSSProperties } from 'react';
 import {
-  ArrowDown, ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2, ChevronDown, CircleHelp,
-  ClipboardCheck, Clock3, Copy, Download, Edit3, ExternalLink, Gift, GraduationCap, Heart,
+  ArrowDown, ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2, CircleHelp,
+  ClipboardCheck, Clock3, Copy, Download, Edit3, ExternalLink, GraduationCap, Heart,
   LayoutDashboard, Link2, LogOut, Mail, MapPin, Menu, MessageCircle, Minus, MoreHorizontal, Music2,
   Pause, Pencil, Play, Plus, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, Users, Volume2,
   WandSparkles, X, XCircle
